@@ -10,7 +10,7 @@ QUAL=[{"provider":p,"qualified":True} for p in ("openai","anthropic","google","m
 
 
 class PipelineTests(unittest.TestCase):
-    def run(self, **kw):
+    def pipeline(self, **kw):
         args=dict(
           project="book",
           config=CONFIG,
@@ -23,32 +23,32 @@ class PipelineTests(unittest.TestCase):
         return run_pipeline(**args)
 
     def test_end_to_end_clean_pass(self):
-        r=self.run()
+        r=self.pipeline()
         self.assertEqual(r["decision"],"PASS")
         self.assertEqual(r["release_gate"]["decision"],"PASS")
 
     def test_deterministic_failure_blocks(self):
-        r=self.run(deterministic_report={"passed":False,"build_passed":True})
+        r=self.pipeline(deterministic_report={"passed":False,"build_passed":True})
         self.assertEqual(r["decision"],"FAIL")
 
     def test_incomplete_ai_board_blocks(self):
-        r=self.run(review_run={"complete":False,"findings":[]})
+        r=self.pipeline(review_run={"complete":False,"findings":[]})
         self.assertEqual(r["decision"],"FAIL")
 
     def test_high_finding_blocks(self):
         f={"finding_id":"F-1","severity":"high","category":"language","file":"a.md","claim":None,"problem":"bad","suggested_fix":"fix","confidence":0.9,"requires_verification":False,"verification_status":"unverified","reviewer":"openai"}
-        r=self.run(review_run={"complete":True,"findings":[f]})
+        r=self.pipeline(review_run={"complete":True,"findings":[f]})
         self.assertEqual(r["decision"],"FAIL")
         self.assertTrue(r["consensus"])
         self.assertTrue(r["judged_findings"])
 
     def test_evidence_can_confirm_consensus(self):
         f={"finding_id":"F-1","severity":"medium","category":"fact","file":"a.md","claim":"x","problem":"wrong","suggested_fix":"fix","confidence":0.9,"requires_verification":True,"verification_status":"unverified","reviewer":"openai"}
-        r=self.run(review_run={"complete":True,"findings":[f]}, evidence_by_consensus={"CON-0001":[{"type":"primary_source","supports":"confirm","ref":"datasheet"}]})
+        r=self.pipeline(review_run={"complete":True,"findings":[f]}, evidence_by_consensus={"CON-0001":[{"type":"primary_source","supports":"confirm","ref":"datasheet"}]})
         self.assertEqual(r["consensus"][0]["verification_status"],"confirmed")
 
     def test_human_approval_blocks(self):
-        self.assertEqual(self.run(human_approved=False)["decision"],"FAIL")
+        self.assertEqual(self.pipeline(human_approved=False)["decision"],"FAIL")
 
 
 if __name__=="__main__":
