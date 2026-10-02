@@ -21,7 +21,7 @@ def qualify_provider(*, provider: str, adapter, model: str) -> dict[str, Any]:
     started = time.monotonic()
     try:
         response = adapter.review(request)
-        schema_path = Path(__file__).resolve().parents[2] / "schema" / "finding.schema.json"
+        schema_path = Path(__file__).resolve().parent / "schemas" / "finding.schema.json"
         normalized = normalize_and_validate(response.findings, request.reviewer_id, schema_path)
         elapsed_ms = round((time.monotonic() - started) * 1000)
         return {
@@ -50,7 +50,7 @@ def qualification_complete(results: list[dict[str, Any]], required: list[str]) -
 
 
 _SECRET_PATTERNS = (
-    re.compile(r"(?i)(api[_-]?key|authorization|bearer|token|secret|password)\\s*[:=]\\s*[^\\s,;]+"),
+    re.compile(r"(?i)authorization\\s*:\\s*bearer\\s+[^\\s,;]+"),\n    re.compile(r"(?i)(api[_-]?key|token|secret|password)\\s*[:=]\\s*[^\\s,;]+"),
     re.compile(r"sk-[A-Za-z0-9_-]{8,}"),
 )
 
