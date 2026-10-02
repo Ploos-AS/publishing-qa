@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ploos Publishing QA Consensus Finding",
+  "type": "object",
+  "required": ["consensus_id","category","reviewers","agreement_count","finding_ids","reported_severities","requires_verification","verification_status"],
+  "properties": {
+    "consensus_id": {"type":"string","minLength":1},
+    "category": {"type":"string"},
+    "file": {"type":["string","null"]},
+    "reviewers": {"type":"array","items":{"type":"string"},"uniqueItems":true},
+    "agreement_count": {"type":"integer","minimum":1},
+    "finding_ids": {"type":"array","items":{"type":"string"},"minItems":1},
+    "reported_severities": {"type":"array","items":{"type":"string"},"minItems":1},
+    "requires_verification": {"type":"boolean"},
+    "verification_status": {"enum":["unverified","confirmed","likely","disputed","false_positive","needs_human_review"]},
+    "evidence": {"type":"array","items":{"type":"object"}}
+  },
+  "additionalProperties": false
+}
