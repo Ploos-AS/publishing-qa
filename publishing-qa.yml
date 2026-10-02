@@ -55,7 +55,24 @@ review:
 
 ai:
   independent_reviews: true
-  reviewers: [openai, anthropic, google, mistral]
+  reviewers:
+    required:
+      - id: openai
+        roles: [technical, qa_lead]
+      - id: anthropic
+        roles: [pedagogy, manuscript]
+      - id: google
+        roles: [fact_check, consistency]
+      - id: mistral
+        roles: [independent, language]
+    supplemental: []
+  # Supplemental reviewers are optional and never required for a normal release.
+  # Example:
+  # supplemental:
+  #   - id: local-llm
+  #     roles: [privacy, independent]
+  #   - id: specialist
+  #     roles: [domain_expert]
 
 release:
   max_blocker: 0
