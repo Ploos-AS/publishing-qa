@@ -10,7 +10,7 @@ from pathlib import Path
 import yaml
 from jsonschema import Draft202012Validator
 
-from .package import source_digest
+from .package import build_review_documents, source_digest
 from .review import ReviewDocument
 from .validation import load_schema, validate
 
@@ -307,14 +307,15 @@ def main():
     counts = {s: 0 for s in ("blocker","critical","high","medium","low","info")}
     for item in findings:
         counts[item["severity"]] += 1
-    documents = tuple(
-        ReviewDocument(
-            path=str(path.relative_to(root)),
-            content=path.read_text(encoding="utf-8"),
-            language="",
+    loaded_config = yaml.safe_load((root / args.config).read_text(encoding="utf-8")) or {}
+    source_paths = loaded_config.get("source", {}).get("paths", [])
+    if source_paths:
+        documents = build_review_documents(root, source_paths)
+    else:
+        documents = tuple(
+            ReviewDocument(str(path.relative_to(root)), path.read_text(encoding="utf-8"))
+            for path in markdown_files(root, [])
         )
-        for path in markdown_files(root, (yaml.safe_load((root / args.config).read_text(encoding="utf-8")) or {}).get("source", {}).get("paths", []))
-    )
     blocking = any(counts[s] for s in ("blocker","critical","high"))
     build_blocking = any(
         item["category"] == "build" and item["severity"] in ("blocker","critical","high")
