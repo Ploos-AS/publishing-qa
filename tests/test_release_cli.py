@@ -15,7 +15,8 @@ class ReleaseCLITests(unittest.TestCase):
         td=tempfile.TemporaryDirectory()
         root=Path(td.name)
         cfg={
-          "project":{"type":"course-book"},
+          "qa_version":1,
+          "project":{"type":"course-book","primary_language":"nb","languages":["nb","en"]},
           "ai":{"reviewers":{"required":[{"id":"openai"},{"id":"anthropic"},{"id":"google"},{"id":"mistral"}]}},
           "release":{"max_blocker":0,"max_critical":0,"max_high":0,"require_deterministic_tests":True,"require_build":True,"require_human_approval":True},
         }
@@ -61,8 +62,9 @@ class ReleaseCLITests(unittest.TestCase):
         td,root,args=self.fixture()
         try:
             (root/"reviews.json").write_text(json.dumps({"complete":True,"findings":[]}),encoding="utf-8")
-            with self.assertRaises(ArtifactValidationError):
-                release_main(args)
+            with patch("sys.stderr") as stderr:
+                self.assertEqual(release_main(args),2)
+            self.assertTrue(stderr.write.called)
             self.assertFalse((root/"qa-report.json").exists())
         finally: td.cleanup()
 
@@ -70,8 +72,9 @@ class ReleaseCLITests(unittest.TestCase):
         td,root,args=self.fixture()
         try:
             (root/"qual.json").write_text(json.dumps({"provider":"openai"}),encoding="utf-8")
-            with self.assertRaises(ArtifactValidationError):
-                release_main(args)
+            with patch("sys.stderr") as stderr:
+                self.assertEqual(release_main(args),2)
+            self.assertTrue(stderr.write.called)
         finally: td.cleanup()
 
     def test_bad_evidence_key_is_rejected(self):
@@ -79,8 +82,18 @@ class ReleaseCLITests(unittest.TestCase):
         try:
             (root/"evidence.json").write_text(json.dumps({"anything":[]}),encoding="utf-8")
             args.extend(["--evidence",str(root/"evidence.json")])
-            with self.assertRaises(ArtifactValidationError):
-                release_main(args)
+            with patch("sys.stderr") as stderr:
+                self.assertEqual(release_main(args),2)
+            self.assertTrue(stderr.write.called)
+        finally: td.cleanup()
+
+    def test_invalid_config_returns_two(self):
+        td,root,args=self.fixture()
+        try:
+            (root/"publishing-qa.yml").write_text("qa_version: 1\nproject: {}\n", encoding="utf-8")
+            with patch("sys.stderr") as stderr:
+                self.assertEqual(release_main(args),2)
+            self.assertTrue(stderr.write.called)
         finally: td.cleanup()
 
 
