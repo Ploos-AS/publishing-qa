@@ -31,6 +31,7 @@ def evaluate_release_gate(
     required_providers: list[str],
     judged_findings: list[dict[str, Any]],
     human_approved: bool,
+    source_identity_ok: bool = True,
 ) -> dict[str, Any]:
     gates = []
 
@@ -52,6 +53,8 @@ def evaluate_release_gate(
 
     threshold_reasons = _threshold_failures(judged_findings, release)
     gate("finding_thresholds", True, not threshold_reasons, "finding thresholds satisfied" if not threshold_reasons else "; ".join(threshold_reasons))
+
+    gate("source_identity", True, source_identity_ok, "all release evidence is bound to the reviewed source" if source_identity_ok else "source identity mismatch or missing source digest")
 
     req_human = bool(release.get("require_human_approval", True))
     gate("human_approval", req_human, human_approved or not req_human, "human approval recorded" if human_approved else ("human approval not required" if not req_human else "human approval missing"))
