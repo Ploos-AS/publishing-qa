@@ -1,0 +1,23 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"Ploos Publishing QA Release Gate",
+  "type":"object",
+  "required":["format_version","decision","gates","blocking_reasons"],
+  "properties":{
+    "format_version":{"const":1},
+    "decision":{"enum":["PASS","FAIL"]},
+    "gates":{"type":"array","items":{
+      "type":"object",
+      "required":["name","required","passed","reason"],
+      "properties":{
+        "name":{"type":"string"},
+        "required":{"type":"boolean"},
+        "passed":{"type":"boolean"},
+        "reason":{"type":"string"}
+      },
+      "additionalProperties":false
+    }},
+    "blocking_reasons":{"type":"array","items":{"type":"string"}}
+  },
+  "additionalProperties":false
+}
