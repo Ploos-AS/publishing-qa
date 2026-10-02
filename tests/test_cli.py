@@ -81,5 +81,26 @@ class DeterministicQATests(unittest.TestCase):
             self.assertTrue(any(f["category"] == "reference" and "does not exist" in f["problem"] for f in findings))
 
 
+    def test_structure_parity_detects_heading_drift(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config(root, "parity:\n  enabled: true\n  structure: true\n  language_dirs:\n    nb: docs/nb\n    en: docs/en\n")
+            (root / "docs/nb").mkdir(parents=True); (root / "docs/en").mkdir(parents=True)
+            (root / "docs/nb/01.md").write_text("# Tittel\n## Del\n", encoding="utf-8")
+            (root / "docs/en/01.md").write_text("# Title\n### Part\n", encoding="utf-8")
+            findings = run(root, root / "publishing-qa.yml", SCHEMA)
+            self.assertTrue(any("Heading structure differs" in f["problem"] for f in findings))
+
+    def test_structure_parity_detects_code_language_drift(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config(root, "parity:\n  enabled: true\n  structure: true\n  language_dirs:\n    nb: docs/nb\n    en: docs/en\n")
+            (root / "docs/nb").mkdir(parents=True); (root / "docs/en").mkdir(parents=True)
+            (root / "docs/nb/01.md").write_text("# Tittel\n```python\nprint(1)\n```\n", encoding="utf-8")
+            (root / "docs/en/01.md").write_text("# Title\n```text\nprint(1)\n```\n", encoding="utf-8")
+            findings = run(root, root / "publishing-qa.yml", SCHEMA)
+            self.assertTrue(any("Code-block language structure differs" in f["problem"] for f in findings))
+
+
 if __name__ == "__main__":
     unittest.main()
