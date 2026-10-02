@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from publishing_qa.cli import run, main
+from publishing_qa.package import build_review_documents, source_digest
 
 SCHEMA = Path("schema/finding.schema.json").resolve()
 
@@ -30,6 +31,20 @@ class DeterministicQATests(unittest.TestCase):
             self.assertTrue(report["passed"])
             self.assertTrue(report["build_passed"])
             self.assertRegex(report["source_digest"], r"^[0-9a-f]{64}$")
+
+    def test_cli_digest_matches_review_document_package(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config(root, "source:\n  paths: [docs]\n")
+            (root / "docs").mkdir()
+            (root / "docs/chapter.md").write_text("# Hello\n", encoding="utf-8")
+            output = root / "det.json"
+            argv=["publishing-qa",str(root),"--schema",str(SCHEMA),"--output",str(output)]
+            with patch("sys.argv", argv), self.assertRaises(SystemExit):
+                main()
+            report=json.loads(output.read_text(encoding="utf-8"))
+            expected=source_digest(build_review_documents(root, ["docs"], "nb"))
+            self.assertEqual(report["source_digest"], expected)
 
     def test_broken_local_link_is_high(self):
         with tempfile.TemporaryDirectory() as tmp:
