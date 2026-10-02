@@ -20,12 +20,13 @@ class ReleaseCLITests(unittest.TestCase):
           "release":{"max_blocker":0,"max_critical":0,"max_high":0,"require_deterministic_tests":True,"require_build":True,"require_human_approval":True},
         }
         (root/"publishing-qa.yml").write_text(yaml.safe_dump(cfg),encoding="utf-8")
-        (root/"det.json").write_text(json.dumps({"passed":True,"build_passed":True}),encoding="utf-8")
-        (root/"reviews.json").write_text(json.dumps({"format_version":1,"project":"course-book","findings":[],"reviewers":[],"required_failures":[],"complete":True}),encoding="utf-8")
+        digest="a"*64
+        (root/"det.json").write_text(json.dumps({"passed":True,"build_passed":True,"source_digest":digest}),encoding="utf-8")
+        (root/"reviews.json").write_text(json.dumps({"format_version":1,"project":"course-book","source_digest":digest,"findings":[],"reviewers":[],"required_failures":[],"complete":True}),encoding="utf-8")
         q=[{"provider":p,"model":"test-model","qualified":True,"structured_output":True,"latency_ms":1,"error":None} for p in ("openai","anthropic","google","mistral")]
         (root/"qual.json").write_text(json.dumps(q),encoding="utf-8")
         args=["--config",str(root/"publishing-qa.yml"),"--deterministic",str(root/"det.json"),"--reviews",str(root/"reviews.json"),"--qualifications",str(root/"qual.json"),"--output",str(root/"qa-report.json")]
-        if human: args.append("--human-approved")
+        if human: args.extend(["--human-approved","--human-approval-source-digest",digest])
         return td,root,args
 
     def test_pass_writes_report_and_returns_zero(self):
