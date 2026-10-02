@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ploos.no/schemas/publishing-qa/finding.schema.json",
+  "title": "Ploos Publishing QA Finding",
+  "type": "object",
+  "required": ["finding_id","severity","category","problem","confidence","requires_verification"],
+  "properties": {
+    "finding_id": { "type": "string", "minLength": 1 },
+    "severity": { "type": "string", "enum": ["blocker","critical","high","medium","low","info"] },
+    "category": { "type": "string", "enum": ["fact","code","pedagogy","language","translation","accessibility","exercise","solution","reference","build","consistency"] },
+    "file": { "type": ["string","null"] },
+    "line": { "type": ["integer","null"], "minimum": 1 },
+    "claim": { "type": ["string","null"] },
+    "problem": { "type": "string", "minLength": 1 },
+    "suggested_fix": { "type": ["string","null"] },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "requires_verification": { "type": "boolean" },
+    "verification_status": { "type": "string", "enum": ["unverified","confirmed","likely","disputed","false_positive","needs_human_review"] },
+    "reviewer": { "type": ["string","null"] }
+  },
+  "additionalProperties": false
+}
