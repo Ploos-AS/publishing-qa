@@ -23,6 +23,7 @@ def release_main(argv=None):
     p.add_argument("--qualifications", required=True)
     p.add_argument("--evidence")
     p.add_argument("--human-approved", action="store_true")
+    p.add_argument("--human-approval-source-digest")
     p.add_argument("--output", default="qa-report.json")
     args = p.parse_args(argv)
 
@@ -52,6 +53,7 @@ def release_main(argv=None):
         qualifications=qualifications,
         evidence_by_consensus=evidence,
         human_approved=args.human_approved,
+        human_approval_source_digest=args.human_approval_source_digest,
     )
     validate(report, load_schema(schema_dir / "pipeline-report.schema.json"), "pipeline report")
     Path(args.output).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
