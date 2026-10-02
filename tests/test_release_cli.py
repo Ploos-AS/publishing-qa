@@ -7,6 +7,7 @@ from unittest.mock import patch
 import yaml
 
 from publishing_qa.release_cli import release_main
+from publishing_qa.validation import ArtifactValidationError
 
 
 class ReleaseCLITests(unittest.TestCase):
@@ -42,6 +43,32 @@ class ReleaseCLITests(unittest.TestCase):
             report=json.loads((root/"qa-report.json").read_text())
             self.assertEqual(report["decision"],"FAIL")
             self.assertIn("human approval missing",report["release_gate"]["blocking_reasons"])
+        finally: td.cleanup()
+
+    def test_malformed_review_run_is_rejected(self):
+        td,root,args=self.fixture()
+        try:
+            (root/"reviews.json").write_text(json.dumps({"complete":True,"findings":[]}),encoding="utf-8")
+            with self.assertRaises(ArtifactValidationError):
+                release_main(args)
+            self.assertFalse((root/"qa-report.json").exists())
+        finally: td.cleanup()
+
+    def test_qualification_must_be_array(self):
+        td,root,args=self.fixture()
+        try:
+            (root/"qual.json").write_text(json.dumps({"provider":"openai"}),encoding="utf-8")
+            with self.assertRaises(ArtifactValidationError):
+                release_main(args)
+        finally: td.cleanup()
+
+    def test_bad_evidence_key_is_rejected(self):
+        td,root,args=self.fixture()
+        try:
+            (root/"evidence.json").write_text(json.dumps({"anything":[]}),encoding="utf-8")
+            args.extend(["--evidence",str(root/"evidence.json")])
+            with self.assertRaises(ArtifactValidationError):
+                release_main(args)
         finally: td.cleanup()
 
 
