@@ -95,6 +95,23 @@ class DeterministicQATests(unittest.TestCase):
             findings = run(root, root / "publishing-qa.yml", SCHEMA)
             self.assertTrue(any("artifact is missing" in f["problem"] for f in findings))
 
+    def test_required_artifact_generated_by_hook_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config(root, "publication:\n  enabled: true\n  metadata_file: publication.yml\n  required_artifacts: [dist/book.epub]\nhooks:\n  - name: build\n    command: mkdir -p dist && printf epub > dist/book.epub\n")
+            (root / "publication.yml").write_text("title: Test\n", encoding="utf-8")
+            findings = run(root, root / "publishing-qa.yml", SCHEMA)
+            self.assertFalse(any("artifact is missing" in f["problem"] for f in findings))
+
+    def test_failed_hook_keeps_required_artifact_missing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config(root, "publication:\n  enabled: true\n  metadata_file: publication.yml\n  required_artifacts: [dist/book.epub]\nhooks:\n  - name: build\n    command: exit 1\n")
+            (root / "publication.yml").write_text("title: Test\n", encoding="utf-8")
+            findings = run(root, root / "publishing-qa.yml", SCHEMA)
+            self.assertTrue(any("Hook failed: build" in f["problem"] for f in findings))
+            self.assertTrue(any("artifact is missing" in f["problem"] for f in findings))
+
     def test_duplicate_isbn_is_high(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
