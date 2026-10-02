@@ -81,3 +81,12 @@ release:
   require_deterministic_tests: true
   require_build: true
   require_human_approval: true
+
+evidence:
+  producers: []
+  # Example trusted producer:
+  # - id: unit-tests
+  #   type: executable_test
+  #   command: python -m unittest discover -s tests -v
+  #   timeout: 300
+  # Producers must later be explicitly bound to the claim/check they verify.
