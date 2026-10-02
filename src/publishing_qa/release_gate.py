@@ -38,10 +38,10 @@ def evaluate_release_gate(
         gates.append({"name": name, "required": required, "passed": passed, "reason": reason})
 
     req_det = bool(release.get("require_deterministic_tests", True))
-    gate("deterministic", req_det, deterministic_ok, "deterministic QA passed" if deterministic_ok else "deterministic QA failed")
+    gate("deterministic", req_det, deterministic_ok or not req_det, "deterministic QA passed" if deterministic_ok else ("deterministic QA not required" if not req_det else "deterministic QA failed"))
 
     req_build = bool(release.get("require_build", True))
-    gate("build", req_build, build_ok, "publication build passed" if build_ok else "publication build failed")
+    gate("build", req_build, build_ok or not req_build, "publication build passed" if build_ok else ("publication build not required" if not req_build else "publication build failed"))
 
     review_ok = bool(review_run and review_run.get("complete"))
     gate("required_reviewers", True, review_ok, "all required reviewers completed" if review_ok else "required reviewer run incomplete")
@@ -54,7 +54,7 @@ def evaluate_release_gate(
     gate("finding_thresholds", True, not threshold_reasons, "finding thresholds satisfied" if not threshold_reasons else "; ".join(threshold_reasons))
 
     req_human = bool(release.get("require_human_approval", True))
-    gate("human_approval", req_human, human_approved, "human approval recorded" if human_approved else "human approval missing")
+    gate("human_approval", req_human, human_approved or not req_human, "human approval recorded" if human_approved else ("human approval not required" if not req_human else "human approval missing"))
 
     passed = all(g["passed"] for g in gates if g["required"])
     return {
