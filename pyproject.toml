@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 publishing-qa = "publishing_qa.cli:main"
+ploos-qa-release = "publishing_qa.release_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
