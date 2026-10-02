@@ -27,7 +27,7 @@ def release_main(argv=None):
     args = p.parse_args(argv)
 
     config = yaml.safe_load(Path(args.config).read_text(encoding="utf-8")) or {}
-    schema_dir = Path(__file__).resolve().parents[2] / "schema"
+    schema_dir = Path(__file__).resolve().parent / "schemas"
     deterministic = _json(args.deterministic)
     reviews = _json(args.reviews)
     qualifications = _json(args.qualifications)
