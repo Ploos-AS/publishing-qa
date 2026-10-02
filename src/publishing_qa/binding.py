@@ -44,3 +44,28 @@ def validate_bindings(bindings: list[dict[str, Any]], producer_ids: set[str]) ->
             if producer not in producer_ids:
                 errors.append(f"binding[{index}] references unknown producer: {producer}")
     return errors
+
+
+VALID_SUPPORTS = {"confirm", "dispute", "context"}
+
+
+def validate_producers(producers: list[dict[str, Any]]) -> list[str]:
+    errors = []
+    seen = set()
+    for index, producer in enumerate(producers):
+        producer_id = producer.get("id")
+        if not producer_id:
+            errors.append(f"producer[{index}] must have an id")
+        elif producer_id in seen:
+            errors.append(f"producer[{index}] duplicates producer id: {producer_id}")
+        else:
+            seen.add(producer_id)
+        if not producer.get("type"):
+            errors.append(f"producer[{index}] must have a type")
+        if not producer.get("command"):
+            errors.append(f"producer[{index}] must have a command")
+        for field in ("supports_on_success", "supports_on_failure", "supports_on_timeout"):
+            value = producer.get(field, "context" if field == "supports_on_timeout" else ("confirm" if field == "supports_on_success" else "dispute"))
+            if value not in VALID_SUPPORTS:
+                errors.append(f"producer[{index}].{field} must be one of: confirm, dispute, context")
+    return errors
