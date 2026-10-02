@@ -28,12 +28,14 @@ def run_reviews(
     adapter_options: dict[str, dict[str, Any]] | None = None,
     instructions: str = "",
     context: dict[str, Any] | None = None,
+    audit_full_content: bool = False,
 ):
     adapter_options = adapter_options or {}
     context = context or {}
     normalized = []
     audit = []
     required_failures = []
+    digest = source_digest(documents)
 
     for spec, required in reviewer_specs(config):
         reviewer_id = spec["id"]
@@ -46,11 +48,26 @@ def run_reviews(
             instructions=instructions,
             context=dict(context),
         )
+        request_audit = {
+            "project": request.project,
+            "reviewer_id": request.reviewer_id,
+            "roles": list(request.roles),
+            "instructions": request.instructions,
+            "context": dict(request.context),
+            "source_digest": digest,
+            "documents": [
+                {"path": d.path, "language": d.language, "size_bytes": len(d.content.encode("utf-8"))}
+                for d in request.documents
+            ],
+        }
+        if audit_full_content:
+            request_audit = asdict(request)
+            request_audit["source_digest"] = digest
         entry = {
             "reviewer_id": reviewer_id,
             "provider": provider,
             "required": required,
-            "request": asdict(request),
+            "request": request_audit,
         }
         try:
             adapter = registry.create(provider, **adapter_options.get(provider, {}))
@@ -58,7 +75,15 @@ def run_reviews(
             items = normalize_and_validate(response.findings, reviewer_id, schema_path)
             normalized.extend(items)
             entry["status"] = "success"
-            entry["response"] = asdict(response)
+            entry["response"] = (
+                asdict(response) if audit_full_content else {
+                    "reviewer_id": response.reviewer_id,
+                    "provider": response.provider,
+                    "model": response.model,
+                    "finding_count": len(response.findings),
+                    "notes_present": bool(response.notes),
+                }
+            )
             entry["normalized_findings"] = items
         except Exception as exc:
             entry["status"] = "failed"
@@ -70,7 +95,7 @@ def run_reviews(
     return {
         "format_version": 1,
         "project": project,
-        "source_digest": source_digest(documents),
+        "source_digest": digest,
         "findings": normalized,
         "reviewers": audit,
         "required_failures": required_failures,
