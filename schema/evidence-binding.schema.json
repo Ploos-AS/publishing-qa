@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ploos Publishing QA Evidence Binding",
+  "type": "object",
+  "required": ["match","producers"],
+  "properties": {
+    "match": {
+      "type":"object",
+      "minProperties":1,
+      "properties": {
+        "finding_id":{"type":"string"},
+        "claim_id":{"type":"string"},
+        "category":{"oneOf":[{"type":"string"},{"type":"array","items":{"type":"string"},"minItems":1}]},
+        "file":{"oneOf":[{"type":"string"},{"type":"array","items":{"type":"string"},"minItems":1}]}
+      },
+      "additionalProperties":false
+    },
+    "producers":{"oneOf":[{"type":"string"},{"type":"array","items":{"type":"string"},"minItems":1}]}
+  },
+  "additionalProperties":false
+}
