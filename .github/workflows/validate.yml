@@ -1,0 +1,27 @@
+name: Validate publishing-qa
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON schema syntax
+        run: python -m json.tool schema/finding.schema.json >/dev/null
+
+      - name: Validate required files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s README.md
+          test -s publishing-qa.yml
+          test -s schema/finding.schema.json
+          test -s docs/reviewer-roles.md
+          test -s docs/release-gates.md
