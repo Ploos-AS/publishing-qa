@@ -1,6 +1,6 @@
 import unittest
 
-from publishing_qa.providers.transports import GeminiTransport, MistralTransport, OpenAITransport
+from publishing_qa.providers.transports import AnthropicTransport, GeminiTransport, MistralTransport, OpenAITransport
 
 
 class FakeClient:
@@ -33,6 +33,13 @@ class TransportTests(unittest.TestCase):
         t=MistralTransport(api_key="x",client=c)
         t.generate_json(model="m",system="s",prompt="p",schema=SCHEMA)
         self.assertEqual(c.calls[0][1]["payload"]["response_format"]["type"],"json_schema")
+
+    def test_anthropic_uses_output_config_format(self):
+        c=FakeClient({"content":[{"type":"text","text":"{\\\"findings\\\":[]}"}]})
+        t=AnthropicTransport(api_key="x",client=c)
+        t.generate_json(model="m",system="s",prompt="p",schema=SCHEMA)
+        payload=c.calls[0][1]["payload"]
+        self.assertEqual(payload["output_config"]["format"]["type"],"json_schema")
 
 
 if __name__=="__main__":
