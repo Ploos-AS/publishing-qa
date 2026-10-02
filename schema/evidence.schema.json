@@ -10,7 +10,8 @@
     "supports": {"enum":["confirm","dispute","context"]},
     "source_digest": {"type":["string","null"]},
     "detail": {"type":["string","null"]},
-    "collected_at": {"type":["string","null"]}
+    "collected_at": {"type":["string","null"]},
+    "provenance": {"type":"object"}
   },
   "additionalProperties": false
 }
