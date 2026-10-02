@@ -1,5 +1,5 @@
 import unittest
-from publishing_qa.binding import binding_matches, select_producers, validate_bindings
+from publishing_qa.binding import binding_matches, select_producers, validate_bindings, validate_producers
 
 
 class BindingTests(unittest.TestCase):
@@ -28,6 +28,26 @@ class BindingTests(unittest.TestCase):
 
     def test_empty_match_is_invalid(self):
         self.assertTrue(validate_bindings([{"match":{},"producers":["compiler"]}], {"compiler"}))
+
+    def test_valid_producer_polarity(self):
+        self.assertEqual(validate_producers([{
+            "id":"negative-test","type":"executable_test","command":"make negative-test",
+            "supports_on_success":"dispute","supports_on_failure":"confirm","supports_on_timeout":"context",
+        }]), [])
+
+    def test_invalid_producer_polarity_is_rejected(self):
+        errors = validate_producers([{
+            "id":"tests","type":"executable_test","command":"make test",
+            "supports_on_failure":"maybe",
+        }])
+        self.assertTrue(any("supports_on_failure" in error for error in errors))
+
+    def test_duplicate_producer_ids_are_rejected(self):
+        errors = validate_producers([
+            {"id":"tests","type":"executable_test","command":"make test"},
+            {"id":"tests","type":"compiler","command":"make compile"},
+        ])
+        self.assertTrue(any("duplicates producer id" in error for error in errors))
 
 
 if __name__ == "__main__":
