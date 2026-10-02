@@ -3,9 +3,27 @@ qa_version: 1
 project:
   type: course-book
   primary_language: nb
-  languages:
-    - nb
-    - en
+  languages: [nb, en]
+
+source:
+  paths: [docs]
+  frontmatter_required: []
+
+parity:
+  enabled: false
+  language_dirs:
+    nb: docs/nb
+    en: docs/en
+
+exercises:
+  enabled: false
+  exercise_dir: exercises
+  solution_dir: solutions
+
+hooks: []
+# Example:
+# - name: build-publications
+#   command: make html epub pdf
 
 review:
   technical: required
@@ -18,11 +36,7 @@ review:
 
 ai:
   independent_reviews: true
-  reviewers:
-    - openai
-    - anthropic
-    - google
-    - mistral
+  reviewers: [openai, anthropic, google, mistral]
 
 release:
   max_blocker: 0
