@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .consensus import apply_verification, group_findings, summarize_groups
+from .consensus import apply_verification, summarize_groups
 from .judge import judge_record
 from .release_gate import evaluate_release_gate
 
@@ -18,7 +18,7 @@ def run_pipeline(
     evidence_by_consensus: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     findings = list(review_run.get("findings", []))
-    groups = summarize_groups(group_findings(findings))
+    groups = summarize_groups(findings)
     evidence_by_consensus = evidence_by_consensus or {}
     groups = [
         apply_verification(group, evidence=evidence_by_consensus[group["consensus_id"]])
