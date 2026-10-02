@@ -1,0 +1,16 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"Ploos Publishing QA Evidence Producer",
+  "type":"object",
+  "required":["id","type","command"],
+  "properties":{
+    "id":{"type":"string","minLength":1},
+    "type":{"type":"string","minLength":1},
+    "command":{"type":"string","minLength":1},
+    "timeout":{"type":"integer","minimum":1},
+    "supports_on_success":{"enum":["confirm","dispute","context"]},
+    "supports_on_failure":{"enum":["confirm","dispute","context"]},
+    "supports_on_timeout":{"enum":["confirm","dispute","context"]}
+  },
+  "additionalProperties":false
+}
