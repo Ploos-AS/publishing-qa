@@ -37,16 +37,19 @@ def run_pipeline(
 
     review_digest = review_run.get("source_digest")
     deterministic_digest = deterministic_report.get("source_digest")
-    evidence_digests = {
-        item.get("source_digest")
+    evidence_items = [
+        item
         for items in evidence_by_consensus.values()
         for item in items
-        if item.get("source_digest")
-    }
+    ]
+    evidence_identity_ok = all(
+        item.get("source_digest") == review_digest
+        for item in evidence_items
+    )
     source_identity_ok = bool(
         review_digest
         and deterministic_digest == review_digest
-        and (not evidence_digests or evidence_digests == {review_digest})
+        and evidence_identity_ok
         and (not human_approved or human_approval_source_digest == review_digest)
     )
 
