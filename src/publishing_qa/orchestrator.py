@@ -7,6 +7,7 @@ from typing import Any
 from .normalize import normalize_and_validate
 from .review import AdapterRegistry, ReviewDocument, ReviewRequest
 from .package import source_digest
+from .qualification import _safe_error
 
 
 def reviewer_specs(config: dict[str, Any]):
@@ -87,7 +88,7 @@ def run_reviews(
             entry["normalized_findings"] = items
         except Exception as exc:
             entry["status"] = "failed"
-            entry["error"] = f"{type(exc).__name__}: {exc}"
+            entry["error"] = _safe_error(exc)
             if required:
                 required_failures.append(reviewer_id)
         audit.append(entry)
