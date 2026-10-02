@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -12,38 +13,64 @@ from jsonschema import Draft202012Validator
 
 def finding(severity, category, problem, file=None, line=None):
     return {
-        "finding_id": "",
-        "severity": severity,
-        "category": category,
-        "file": file,
-        "line": line,
-        "claim": None,
-        "problem": problem,
-        "suggested_fix": None,
-        "confidence": 1.0,
-        "requires_verification": False,
-        "verification_status": "confirmed",
+        "finding_id": "", "severity": severity, "category": category,
+        "file": file, "line": line, "claim": None, "problem": problem,
+        "suggested_fix": None, "confidence": 1.0,
+        "requires_verification": False, "verification_status": "confirmed",
         "reviewer": "deterministic",
     }
 
 
-def scan_markdown(root: Path):
+def markdown_files(root, paths):
+    if not paths:
+        return sorted(root.rglob("*.md"))
+    found = []
+    for item in paths:
+        p = root / item
+        found.extend(p.rglob("*.md") if p.is_dir() else ([p] if p.suffix == ".md" and p.exists() else []))
+    return sorted(set(found))
+
+
+def frontmatter(text):
+    if not text.startswith("---\n"):
+        return None
+    end = text.find("\n---\n", 4)
+    if end < 0:
+        return False
+    try:
+        return yaml.safe_load(text[4:end]) or {}
+    except yaml.YAMLError:
+        return False
+
+
+def scan_markdown(root: Path, config):
     findings = []
-    md_files = sorted(root.rglob("*.md"))
-    heading_ids = {}
-    for path in md_files:
+    source = config.get("source", {})
+    files = markdown_files(root, source.get("paths", []))
+    required_fm = source.get("frontmatter_required", [])
+    for path in files:
+        rel = str(path.relative_to(root))
         try:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
-            findings.append(finding("high", "build", "Markdown file is not valid UTF-8", str(path)))
+            findings.append(finding("high", "build", "Markdown file is not valid UTF-8", rel))
             continue
 
-        rel = str(path.relative_to(root))
+        fm = frontmatter(text)
+        if required_fm and fm is None:
+            findings.append(finding("medium", "consistency", "Required YAML frontmatter is missing", rel, 1))
+        elif fm is False:
+            findings.append(finding("high", "build", "Invalid YAML frontmatter", rel, 1))
+        elif isinstance(fm, dict):
+            for key in required_fm:
+                if key not in fm or fm[key] in (None, ""):
+                    findings.append(finding("medium", "consistency", f"Required frontmatter field is missing: {key}", rel, 1))
+
         if "\t" in text:
             findings.append(finding("low", "consistency", "Tab character found in Markdown source", rel))
 
-        headings = [m.group(1).strip() for m in re.finditer(r"^#{1,6}\s+(.+?)\s*$", text, re.M)]
-        heading_ids[rel] = headings
+        if text.count("```") % 2:
+            findings.append(finding("high", "build", "Unbalanced fenced code block", rel))
 
         for match in re.finditer(r"!\[([^\]]*)\]\(([^)]+)\)", text):
             alt, target = match.groups()
@@ -63,29 +90,82 @@ def scan_markdown(root: Path):
             local = target.split("#", 1)[0]
             if local and not (path.parent / local).resolve().exists():
                 findings.append(finding("high", "reference", f"Broken local link: {target}", rel, line))
+    return files, findings
 
-    return md_files, findings
+
+def check_language_parity(root, config):
+    findings = []
+    parity = config.get("parity", {})
+    if not parity.get("enabled"):
+        return findings
+    dirs = parity.get("language_dirs", {})
+    primary = config["project"]["primary_language"]
+    base = root / dirs.get(primary, primary)
+    if not base.exists():
+        return [finding("high", "translation", f"Primary language directory is missing: {base.relative_to(root)}")]
+    for lang in config["project"].get("languages", []):
+        if lang == primary:
+            continue
+        other = root / dirs.get(lang, lang)
+        if not other.exists():
+            findings.append(finding("high", "translation", f"Language directory is missing: {other.relative_to(root)}"))
+            continue
+        for src in base.rglob("*.md"):
+            rel = src.relative_to(base)
+            if not (other / rel).exists():
+                findings.append(finding("high", "translation", f"Missing {lang} counterpart for {rel}", str(src.relative_to(root))))
+    return findings
+
+
+def check_exercises(root, config):
+    findings = []
+    ex = config.get("exercises", {})
+    if not ex.get("enabled"):
+        return findings
+    exercises = root / ex.get("exercise_dir", "exercises")
+    solutions = root / ex.get("solution_dir", "solutions")
+    if not exercises.exists():
+        return findings
+    for src in exercises.rglob("*.md"):
+        rel = src.relative_to(exercises)
+        if not (solutions / rel).exists():
+            findings.append(finding("high", "solution", f"Missing solution for exercise: {rel}", str(src.relative_to(root))))
+    return findings
+
+
+def run_hooks(root, config):
+    findings = []
+    for hook in config.get("hooks", []):
+        name, command = hook.get("name", "unnamed"), hook.get("command")
+        if not command:
+            continue
+        result = subprocess.run(command, cwd=root, shell=True, text=True, capture_output=True)
+        if result.returncode:
+            findings.append(finding("high", "build", f"Hook failed: {name} (exit {result.returncode})"))
+    return findings
 
 
 def run(root: Path, config_path: Path, schema_path: Path):
     findings = []
     try:
-        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
     except Exception as exc:
-        findings.append(finding("blocker", "build", f"Cannot parse QA configuration: {exc}", str(config_path)))
-        return findings
+        return [finding("blocker", "build", f"Cannot parse QA configuration: {exc}", str(config_path))]
 
     if config.get("qa_version") != 1:
         findings.append(finding("critical", "consistency", "Unsupported or missing qa_version", str(config_path)))
-
     project = config.get("project", {})
     if not project.get("primary_language"):
         findings.append(finding("high", "consistency", "project.primary_language is required", str(config_path)))
     if not project.get("languages"):
         findings.append(finding("high", "consistency", "project.languages must not be empty", str(config_path)))
 
-    _, md_findings = scan_markdown(root)
-    findings.extend(md_findings)
+    _, md = scan_markdown(root, config)
+    findings += md
+    if project.get("primary_language") and project.get("languages"):
+        findings += check_language_parity(root, config)
+    findings += check_exercises(root, config)
+    findings += run_hooks(root, config)
 
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     validator = Draft202012Validator(schema)
@@ -94,7 +174,6 @@ def run(root: Path, config_path: Path, schema_path: Path):
         errors = list(validator.iter_errors(item))
         if errors:
             raise RuntimeError(f"Internal finding schema violation: {errors[0].message}")
-
     return findings
 
 
@@ -105,26 +184,15 @@ def main():
     parser.add_argument("--schema", default="schema/finding.schema.json")
     parser.add_argument("--output", default="qa-report.json")
     args = parser.parse_args()
-
     root = Path(args.root).resolve()
-    config = (root / args.config).resolve()
-    schema = (root / args.schema).resolve()
-    findings = run(root, config, schema)
-
-    counts = {s: 0 for s in ("blocker", "critical", "high", "medium", "low", "info")}
+    findings = run(root, (root / args.config).resolve(), (root / args.schema).resolve())
+    counts = {s: 0 for s in ("blocker","critical","high","medium","low","info")}
     for item in findings:
         counts[item["severity"]] += 1
-
-    report = {
-        "format_version": 1,
-        "engine": "ploos-publishing-qa",
-        "findings": findings,
-        "summary": counts,
-    }
+    report = {"format_version": 1, "engine": "ploos-publishing-qa", "findings": findings, "summary": counts}
     Path(args.output).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-
     print(json.dumps(counts, sort_keys=True))
-    sys.exit(1 if counts["blocker"] or counts["critical"] or counts["high"] else 0)
+    sys.exit(1 if any(counts[s] for s in ("blocker","critical","high")) else 0)
 
 
 if __name__ == "__main__":
