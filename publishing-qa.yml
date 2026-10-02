@@ -11,6 +11,7 @@ source:
 
 parity:
   enabled: false
+  structure: true
   language_dirs:
     nb: docs/nb
     en: docs/en
