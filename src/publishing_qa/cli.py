@@ -133,6 +133,75 @@ def check_exercises(root, config):
     return findings
 
 
+
+def check_publication(root, config):
+    findings = []
+    pub = config.get("publication", {})
+    if not pub.get("enabled"):
+        return findings
+
+    metadata_path = root / pub.get("metadata_file", "publication.yml")
+    if not metadata_path.exists():
+        return [finding("high", "build", f"Publication metadata file is missing: {metadata_path.relative_to(root)}")]
+
+    try:
+        metadata = yaml.safe_load(metadata_path.read_text(encoding="utf-8")) or {}
+    except Exception as exc:
+        return [finding("high", "build", f"Cannot parse publication metadata: {exc}", str(metadata_path.relative_to(root)))]
+
+    for key in pub.get("required_metadata", []):
+        value = metadata
+        for part in key.split("."):
+            value = value.get(part) if isinstance(value, dict) else None
+        if value in (None, "", []):
+            findings.append(finding("high", "consistency", f"Required publication metadata is missing: {key}", str(metadata_path.relative_to(root))))
+
+    isbns = metadata.get("isbn", {})
+    if isinstance(isbns, dict):
+        seen = {}
+        for edition, raw in isbns.items():
+            if not raw:
+                continue
+            digits = re.sub(r"[^0-9Xx]", "", str(raw))
+            if len(digits) not in (10, 13):
+                findings.append(finding("high", "consistency", f"ISBN for {edition} has invalid length", str(metadata_path.relative_to(root))))
+            if digits in seen:
+                findings.append(finding("high", "consistency", f"ISBN is reused by {seen[digits]} and {edition}", str(metadata_path.relative_to(root))))
+            seen[digits] = edition
+
+    for artifact in pub.get("required_artifacts", []):
+        if not (root / artifact).exists():
+            findings.append(finding("high", "build", f"Required publication artifact is missing: {artifact}"))
+    return findings
+
+
+def check_chapter_order(root, config):
+    findings = []
+    order = config.get("chapter_order", {})
+    if not order.get("enabled"):
+        return findings
+    manifest = root / order.get("manifest", "chapters.yml")
+    if not manifest.exists():
+        return [finding("high", "consistency", f"Chapter manifest is missing: {manifest.relative_to(root)}")]
+    try:
+        data = yaml.safe_load(manifest.read_text(encoding="utf-8")) or {}
+    except Exception as exc:
+        return [finding("high", "build", f"Cannot parse chapter manifest: {exc}", str(manifest.relative_to(root)))]
+    chapters = data.get("chapters", data if isinstance(data, list) else [])
+    seen = set()
+    for item in chapters:
+        path = item if isinstance(item, str) else item.get("file")
+        if not path:
+            findings.append(finding("high", "consistency", "Chapter manifest contains an entry without a file", str(manifest.relative_to(root))))
+            continue
+        if path in seen:
+            findings.append(finding("high", "consistency", f"Duplicate chapter in manifest: {path}", str(manifest.relative_to(root))))
+        seen.add(path)
+        if not (root / path).exists():
+            findings.append(finding("high", "reference", f"Chapter listed in manifest does not exist: {path}", str(manifest.relative_to(root))))
+    return findings
+
+
 def run_hooks(root, config):
     findings = []
     for hook in config.get("hooks", []):
