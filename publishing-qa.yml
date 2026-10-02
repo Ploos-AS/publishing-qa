@@ -1,0 +1,33 @@
+qa_version: 1
+
+project:
+  type: course-book
+  primary_language: nb
+  languages:
+    - nb
+    - en
+
+review:
+  technical: required
+  pedagogical: required
+  editorial: required
+  exercises: required
+  translation_parity: required
+  accessibility: required
+  references: required
+
+ai:
+  independent_reviews: true
+  reviewers:
+    - openai
+    - anthropic
+    - google
+    - mistral
+
+release:
+  max_blocker: 0
+  max_critical: 0
+  max_high: 0
+  require_deterministic_tests: true
+  require_build: true
+  require_human_approval: true
