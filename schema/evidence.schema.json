@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ploos Publishing QA Evidence",
+  "type": "object",
+  "required": ["evidence_id","type","ref","supports"],
+  "properties": {
+    "evidence_id": {"type":"string","minLength":1},
+    "type": {"enum":["primary_source","standard","authoritative_manual","executable_test","compiler","simulator","emulator","secondary_source","human_review"]},
+    "ref": {"type":"string","minLength":1},
+    "supports": {"enum":["confirm","dispute","context"]},
+    "source_digest": {"type":["string","null"]},
+    "detail": {"type":["string","null"]},
+    "collected_at": {"type":["string","null"]}
+  },
+  "additionalProperties": false
+}
