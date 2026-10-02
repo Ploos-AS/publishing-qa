@@ -27,8 +27,6 @@ def source_digest(documents: tuple[ReviewDocument, ...]) -> str:
     for doc in sorted(documents, key=lambda d: d.path):
         digest.update(doc.path.encode("utf-8"))
         digest.update(b"\0")
-        digest.update((doc.language or "").encode("utf-8"))
-        digest.update(b"\0")
         digest.update(doc.content.encode("utf-8"))
         digest.update(b"\0")
     return digest.hexdigest()
