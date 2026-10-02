@@ -42,6 +42,11 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(r["consensus"])
         self.assertTrue(r["judged_findings"])
 
+    def test_evidence_can_confirm_consensus(self):
+        f={"finding_id":"F-1","severity":"medium","category":"fact","file":"a.md","claim":"x","problem":"wrong","suggested_fix":"fix","confidence":0.9,"requires_verification":True,"verification_status":"unverified","reviewer":"openai"}
+        r=self.run(review_run={"complete":True,"findings":[f]}, evidence_by_consensus={"CON-0001":[{"type":"primary_source","supports":"confirm","ref":"datasheet"}]})
+        self.assertEqual(r["consensus"][0]["verification_status"],"confirmed")
+
     def test_human_approval_blocks(self):
         self.assertEqual(self.run(human_approved=False)["decision"],"FAIL")
 
