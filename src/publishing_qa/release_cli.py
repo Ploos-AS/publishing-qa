@@ -15,7 +15,7 @@ def _json(path: str):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def release_main(argv=None):
+def _release(argv=None):
     p = argparse.ArgumentParser(prog="ploos-qa release")
     p.add_argument("--config", default="publishing-qa.yml")
     p.add_argument("--deterministic", required=True)
@@ -60,6 +60,14 @@ def release_main(argv=None):
     Path(args.output).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(report["decision"])
     return 0 if report["decision"] == "PASS" else 1
+
+
+def release_main(argv=None):
+    try:
+        return _release(argv)
+    except (OSError, json.JSONDecodeError, yaml.YAMLError, ArtifactValidationError) as exc:
+        print(f"ploos-qa release: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
 
 
 def main():
