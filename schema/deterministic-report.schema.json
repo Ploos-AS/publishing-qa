@@ -1,0 +1,11 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"PloosQA Deterministic Stage Report",
+  "type":"object",
+  "required":["passed","build_passed"],
+  "properties":{
+    "passed":{"type":"boolean"},
+    "build_passed":{"type":"boolean"}
+  },
+  "additionalProperties":true
+}
