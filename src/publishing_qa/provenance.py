@@ -19,6 +19,8 @@ def collect_command_evidence(
     command: str,
     cwd: Path,
     supports_on_success: str = "confirm",
+    supports_on_failure: str = "dispute",
+    supports_on_timeout: str = "context",
     timeout: int = 300,
 ) -> dict[str, Any]:
     started = datetime.now(timezone.utc).isoformat()
@@ -45,12 +47,12 @@ def collect_command_evidence(
 
     if timed_out:
         exit_code = None
-        supports = "context"
+        supports = supports_on_timeout
     else:
         stdout = proc.stdout
         stderr = proc.stderr
         exit_code = proc.returncode
-        supports = supports_on_success if exit_code == 0 else "dispute"
+        supports = supports_on_success if exit_code == 0 else supports_on_failure
 
     transcript = json.dumps({
         "command": command,
