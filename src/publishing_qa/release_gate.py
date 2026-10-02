@@ -9,7 +9,7 @@ BLOCKING_STATUSES = {"confirmed", "likely", "disputed", "needs_human_review"}
 
 def _threshold_failures(findings: list[dict[str, Any]], release: dict[str, Any]) -> list[str]:
     counts = Counter(
-        f.get("severity", "info")
+        f.get("severity", f.get("max_reported_severity", "info"))
         for f in findings
         if f.get("disposition", f.get("verification_status", "unverified")) in BLOCKING_STATUSES
     )
