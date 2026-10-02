@@ -20,6 +20,24 @@ exercises:
   exercise_dir: exercises
   solution_dir: solutions
 
+publication:
+  enabled: false
+  metadata_file: publication.yml
+  required_metadata:
+    - title
+    - author
+    - publisher
+    - license
+  required_artifacts: []
+  # Example after a release build:
+  # - dist/book.html
+  # - dist/book.epub
+  # - dist/book.pdf
+
+chapter_order:
+  enabled: false
+  manifest: chapters.yml
+
 hooks: []
 # Example:
 # - name: build-publications
