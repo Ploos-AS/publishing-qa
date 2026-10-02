@@ -32,7 +32,7 @@ class ConsensusTests(unittest.TestCase):
 
     def test_verification_requires_explicit_step(self):
         item = summarize_groups([f("A-1","a","Claim is wrong")])[0]
-        verified = apply_verification(item, "confirmed", [{"type":"primary_source","ref":"datasheet"}])
+        verified = apply_verification(item, evidence=[{"type":"primary_source","ref":"datasheet","supports":"confirm"}])
         self.assertEqual(verified["verification_status"], "confirmed")
         self.assertEqual(len(verified["evidence"]), 1)
 
