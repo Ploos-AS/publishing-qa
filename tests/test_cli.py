@@ -1,8 +1,10 @@
 import tempfile
+import json
+from unittest.mock import patch
 import unittest
 from pathlib import Path
 
-from publishing_qa.cli import run
+from publishing_qa.cli import run, main
 
 SCHEMA = Path("schema/finding.schema.json").resolve()
 
@@ -15,6 +17,20 @@ def config(root, extra=""):
 
 
 class DeterministicQATests(unittest.TestCase):
+    def test_cli_report_matches_release_deterministic_contract(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); config(root)
+            (root / "chapter.md").write_text("# Hello\n", encoding="utf-8")
+            output = root / "det.json"
+            argv=["publishing-qa",str(root),"--schema",str(SCHEMA),"--output",str(output)]
+            with patch("sys.argv", argv), self.assertRaises(SystemExit) as exit:
+                main()
+            self.assertEqual(exit.exception.code, 0)
+            report=json.loads(output.read_text(encoding="utf-8"))
+            self.assertTrue(report["passed"])
+            self.assertTrue(report["build_passed"])
+            self.assertRegex(report["source_digest"], r"^[0-9a-f]{64}$")
+
     def test_broken_local_link_is_high(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); config(root)
