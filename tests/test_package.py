@@ -20,6 +20,14 @@ class PackageTests(unittest.TestCase):
             second = build_review_documents(root, ["docs"], "en")
             self.assertNotEqual(d1, source_digest(second))
 
+    def test_source_digest_ignores_review_language_metadata(self):
+        from publishing_qa.review import ReviewDocument
+        nb=(ReviewDocument("docs/a.md","same","nb"),)
+        en=(ReviewDocument("docs/a.md","same","en"),)
+        unspecified=(ReviewDocument("docs/a.md","same",None),)
+        self.assertEqual(source_digest(nb), source_digest(en))
+        self.assertEqual(source_digest(nb), source_digest(unspecified))
+
     def test_source_digest_changes_with_content(self):
         from publishing_qa.review import ReviewDocument
         a=(ReviewDocument("docs/a.md","same","en"),)
