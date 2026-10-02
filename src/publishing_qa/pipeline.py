@@ -51,6 +51,7 @@ def run_pipeline(
     return {
         "format_version": 1,
         "project": project,
+        "source_digest": review_run.get("source_digest"),
         "decision": gate["decision"],
         "deterministic": deterministic_report,
         "review_run": review_run,
