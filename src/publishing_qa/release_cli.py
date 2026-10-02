@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from .pipeline import run_pipeline
+from .validation import ArtifactValidationError, load_schema, validate
 
 
 def _json(path: str):
@@ -26,18 +27,33 @@ def release_main(argv=None):
     args = p.parse_args(argv)
 
     config = yaml.safe_load(Path(args.config).read_text(encoding="utf-8")) or {}
-    project = config.get("project", {}).get("name") or config.get("project", {}).get("type") or "publishing-project"
+    schema_dir = Path(__file__).resolve().parents[2] / "schema"
+    deterministic = _json(args.deterministic)
+    reviews = _json(args.reviews)
+    qualifications = _json(args.qualifications)
     evidence = _json(args.evidence) if args.evidence else {}
+
+    validate(deterministic, load_schema(schema_dir / "deterministic-report.schema.json"), "deterministic report")
+    validate(reviews, load_schema(schema_dir / "review-run.schema.json"), "review run")
+    qschema = load_schema(schema_dir / "provider-qualification.schema.json")
+    if not isinstance(qualifications, list):
+        raise ArtifactValidationError("qualifications: <root>: must be an array")
+    for i, item in enumerate(qualifications):
+        validate(item, qschema, f"qualification[{i}]")
+    validate(evidence, load_schema(schema_dir / "evidence-map.schema.json"), "evidence map")
+
+    project = config.get("project", {}).get("name") or config.get("project", {}).get("type") or "publishing-project"
 
     report = run_pipeline(
         project=project,
         config=config,
-        deterministic_report=_json(args.deterministic),
-        review_run=_json(args.reviews),
-        qualifications=_json(args.qualifications),
+        deterministic_report=deterministic,
+        review_run=reviews,
+        qualifications=qualifications,
         evidence_by_consensus=evidence,
         human_approved=args.human_approved,
     )
+    validate(report, load_schema(schema_dir / "pipeline-report.schema.json"), "pipeline report")
     Path(args.output).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(report["decision"])
     return 0 if report["decision"] == "PASS" else 1
