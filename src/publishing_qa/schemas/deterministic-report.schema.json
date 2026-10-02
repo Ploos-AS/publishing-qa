@@ -1,1 +1,1 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","required":["passed","build_passed"],"properties":{"passed":{"type":"boolean"},"build_passed":{"type":"boolean"}},"additionalProperties":true}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","required":["passed","build_passed","source_digest"],"properties":{"passed":{"type":"boolean"},"build_passed":{"type":"boolean"},"source_digest":{"type":"string","pattern":"^[0-9a-f]{64}$"}},"additionalProperties":true}
