@@ -35,7 +35,7 @@ class TransportTests(unittest.TestCase):
         self.assertEqual(c.calls[0][1]["payload"]["response_format"]["type"],"json_schema")
 
     def test_anthropic_uses_output_config_format(self):
-        c=FakeClient({"content":[{"type":"text","text":"{\\\"findings\\\":[]}"}]})
+        c=FakeClient({"content":[{"type":"text","text":'{"findings":[]}'}]})
         t=AnthropicTransport(api_key="x",client=c)
         t.generate_json(model="m",system="s",prompt="p",schema=SCHEMA)
         payload=c.calls[0][1]["payload"]
