@@ -89,6 +89,9 @@ evidence:
   #   type: executable_test
   #   command: python -m unittest discover -s tests -v
   #   timeout: 300
+  #   supports_on_success: confirm
+  #   supports_on_failure: dispute
+  #   supports_on_timeout: context
   # Producers must be explicitly bound to the claim/check they verify.
   bindings: []
   # Example:
