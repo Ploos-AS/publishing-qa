@@ -202,6 +202,45 @@ def check_chapter_order(root, config):
     return findings
 
 
+
+def heading_levels(text):
+    return [len(m.group(1)) for m in re.finditer(r"^(#{1,6})\\s+.+$", text, re.M)]
+
+
+def code_fences(text):
+    return [m.group(1) or "" for m in re.finditer(r"^```([^\\s`]*)[^\\n]*$", text, re.M)]
+
+
+def check_structure_parity(root, config):
+    findings = []
+    parity = config.get("parity", {})
+    if not parity.get("enabled") or not parity.get("structure", False):
+        return findings
+    dirs = parity.get("language_dirs", {})
+    primary = config["project"]["primary_language"]
+    base = root / dirs.get(primary, primary)
+    if not base.exists():
+        return findings
+    for lang in config["project"].get("languages", []):
+        if lang == primary:
+            continue
+        other = root / dirs.get(lang, lang)
+        if not other.exists():
+            continue
+        for src in base.rglob("*.md"):
+            rel = src.relative_to(base)
+            dst = other / rel
+            if not dst.exists():
+                continue
+            a = src.read_text(encoding="utf-8")
+            b = dst.read_text(encoding="utf-8")
+            if heading_levels(a) != heading_levels(b):
+                findings.append(finding("medium", "translation", f"Heading structure differs between {primary} and {lang}: {rel}", str(src.relative_to(root))))
+            if code_fences(a) != code_fences(b):
+                findings.append(finding("medium", "translation", f"Code-block language structure differs between {primary} and {lang}: {rel}", str(src.relative_to(root))))
+    return findings
+
+
 def run_hooks(root, config):
     findings = []
     for hook in config.get("hooks", []):
@@ -234,6 +273,9 @@ def run(root: Path, config_path: Path, schema_path: Path):
     if project.get("primary_language") and project.get("languages"):
         findings += check_language_parity(root, config)
     findings += check_exercises(root, config)
+    findings += check_publication(root, config)
+    findings += check_chapter_order(root, config)
+    findings += check_structure_parity(root, config)
     findings += run_hooks(root, config)
 
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
