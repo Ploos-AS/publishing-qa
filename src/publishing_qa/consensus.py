@@ -4,6 +4,8 @@ import re
 from collections import defaultdict
 from typing import Any
 
+from .evidence import verification_from_evidence
+
 
 def _tokens(value: str | None) -> set[str]:
     if not value:
@@ -56,11 +58,12 @@ def summarize_groups(findings: list[dict[str, Any]], threshold: float = 0.55):
     return summaries
 
 
-def apply_verification(consensus: dict[str, Any], status: str, evidence: list[dict[str, str]] | None = None):
-    allowed = {"confirmed", "likely", "disputed", "false_positive", "needs_human_review"}
-    if status not in allowed:
-        raise ValueError(f"Unsupported verification status: {status}")
+def apply_verification(consensus: dict[str, Any], status: str | None = None, evidence: list[dict] | None = None):
+    evidence = list(evidence or [])
+    derived = verification_from_evidence(evidence, consensus.get("requires_verification", True))
+    if status is not None and status != derived:
+        raise ValueError(f"Requested status {status} conflicts with evidence-derived status {derived}")
     result = dict(consensus)
-    result["verification_status"] = status
-    result["evidence"] = list(evidence or [])
+    result["verification_status"] = derived
+    result["evidence"] = evidence
     return result
