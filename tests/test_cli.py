@@ -56,5 +56,30 @@ class DeterministicQATests(unittest.TestCase):
             self.assertTrue(any(f["category"] == "build" and f["severity"] == "high" for f in findings))
 
 
+    def test_publication_metadata_and_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config(root, "publication:\n  enabled: true\n  metadata_file: publication.yml\n  required_metadata: [title, author, publisher, license]\n  required_artifacts: [dist/book.epub]\n")
+            (root / "publication.yml").write_text("title: Test\nauthor: Author\npublisher: Ploos AS\nlicense: CC-BY-4.0\n", encoding="utf-8")
+            findings = run(root, root / "publishing-qa.yml", SCHEMA)
+            self.assertTrue(any("artifact is missing" in f["problem"] for f in findings))
+
+    def test_duplicate_isbn_is_high(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config(root, "publication:\n  enabled: true\n  metadata_file: publication.yml\n")
+            (root / "publication.yml").write_text("isbn:\n  epub: '9781234567897'\n  pdf: '9781234567897'\n", encoding="utf-8")
+            findings = run(root, root / "publishing-qa.yml", SCHEMA)
+            self.assertTrue(any("ISBN is reused" in f["problem"] and f["severity"] == "high" for f in findings))
+
+    def test_chapter_manifest_missing_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            config(root, "chapter_order:\n  enabled: true\n  manifest: chapters.yml\n")
+            (root / "chapters.yml").write_text("chapters:\n  - docs/01.md\n", encoding="utf-8")
+            findings = run(root, root / "publishing-qa.yml", SCHEMA)
+            self.assertTrue(any(f["category"] == "reference" and "does not exist" in f["problem"] for f in findings))
+
+
 if __name__ == "__main__":
     unittest.main()
