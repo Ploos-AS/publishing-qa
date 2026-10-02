@@ -44,3 +44,8 @@ source
 4. Agreement between models is evidence, not proof.
 5. Technical claims should prefer primary-source verification.
 6. Releases remain subject to human approval.
+
+
+## Audit privacy
+
+Review audit is privacy-safe by default: source content and provider notes are not retained in the audit artifact, failures are sanitized, and source identity is represented by a digest. Full-content audit is an explicit sensitive debug opt-in. See `docs/m2-audit-privacy.md`.
