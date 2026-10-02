@@ -28,6 +28,10 @@ class ReleaseGateTests(unittest.TestCase):
         f=[{"severity":"high","disposition":"confirmed"}]
         self.assertEqual(self.evaluate(judged_findings=f)["decision"],"FAIL")
 
+    def test_judge_max_reported_severity_is_enforced(self):
+        f=[{"max_reported_severity":"high","disposition":"likely"}]
+        self.assertEqual(self.evaluate(judged_findings=f)["decision"],"FAIL")
+
     def test_false_positive_high_does_not_block(self):
         f=[{"severity":"high","disposition":"false_positive"}]
         self.assertEqual(self.evaluate(judged_findings=f)["decision"],"PASS")
