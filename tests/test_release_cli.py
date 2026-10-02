@@ -21,7 +21,7 @@ class ReleaseCLITests(unittest.TestCase):
         }
         (root/"publishing-qa.yml").write_text(yaml.safe_dump(cfg),encoding="utf-8")
         (root/"det.json").write_text(json.dumps({"passed":True,"build_passed":True}),encoding="utf-8")
-        (root/"reviews.json").write_text(json.dumps({"complete":True,"findings":[]}),encoding="utf-8")
+        (root/"reviews.json").write_text(json.dumps({"format_version":1,"project":"course-book","findings":[],"reviewers":[],"required_failures":[],"complete":True}),encoding="utf-8")
         q=[{"provider":p,"qualified":True} for p in ("openai","anthropic","google","mistral")]
         (root/"qual.json").write_text(json.dumps(q),encoding="utf-8")
         args=["--config",str(root/"publishing-qa.yml"),"--deterministic",str(root/"det.json"),"--reviews",str(root/"reviews.json"),"--qualifications",str(root/"qual.json"),"--output",str(root/"qa-report.json")]
