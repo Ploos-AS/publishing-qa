@@ -6,6 +6,7 @@ from typing import Any
 
 from .normalize import normalize_and_validate
 from .review import AdapterRegistry, ReviewDocument, ReviewRequest
+from .package import source_digest
 
 
 def reviewer_specs(config: dict[str, Any]):
@@ -69,6 +70,7 @@ def run_reviews(
     return {
         "format_version": 1,
         "project": project,
+        "source_digest": source_digest(documents),
         "findings": normalized,
         "reviewers": audit,
         "required_failures": required_failures,
