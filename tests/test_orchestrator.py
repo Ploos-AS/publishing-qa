@@ -42,6 +42,24 @@ class OrchestratorTests(unittest.TestCase):
         self.assertEqual(len(result["findings"]), 1)
         self.assertEqual(result["reviewers"][1]["status"], "failed")
 
+    def test_default_audit_does_not_store_document_content_or_notes(self):
+        config = {"ai":{"reviewers":{"required":[{"id":"r1","provider":"good","roles":["technical"]}]}}}
+        secret = "private manuscript sentence"
+        result = run_reviews(project="x", config=config, documents=(ReviewDocument("a.md",secret,"en"),), registry=self.registry(), schema_path=SCHEMA)
+        audit = result["reviewers"][0]
+        self.assertNotIn(secret, str(audit))
+        self.assertNotIn("content", audit["request"]["documents"][0])
+        self.assertEqual(audit["request"]["documents"][0]["size_bytes"], len(secret.encode("utf-8")))
+        self.assertEqual(audit["request"]["source_digest"], result["source_digest"])
+        self.assertNotIn("notes", audit["response"])
+
+    def test_full_audit_content_requires_explicit_opt_in(self):
+        config = {"ai":{"reviewers":{"required":[{"id":"r1","provider":"good","roles":["technical"]}]}}}
+        secret = "debug manuscript"
+        result = run_reviews(project="x", config=config, documents=(ReviewDocument("a.md",secret,"en"),), registry=self.registry(), schema_path=SCHEMA, audit_full_content=True)
+        self.assertEqual(result["reviewers"][0]["request"]["documents"][0]["content"], secret)
+        self.assertIn("notes", result["reviewers"][0]["response"])
+
     def test_reviewers_receive_independent_context_copies(self):
         config = {"ai":{"reviewers":{"required":[{"id":"a","provider":"good","roles":["technical"]},{"id":"b","provider":"good","roles":["pedagogy"]}]}}}
         context = {"release":"rc1"}
