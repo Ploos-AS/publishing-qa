@@ -29,6 +29,7 @@ def release_main(argv=None):
 
     config = yaml.safe_load(Path(args.config).read_text(encoding="utf-8")) or {}
     schema_dir = Path(__file__).resolve().parent / "schemas"
+    validate(config, load_schema(schema_dir / "config.schema.json"), "QA config")
     deterministic = _json(args.deterministic)
     reviews = _json(args.reviews)
     qualifications = _json(args.qualifications)
