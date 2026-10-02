@@ -12,6 +12,7 @@ from jsonschema import Draft202012Validator
 
 from .package import source_digest
 from .review import ReviewDocument
+from .validation import load_schema, validate
 
 
 def finding(severity, category, problem, file=None, line=None):
@@ -262,6 +263,9 @@ def run(root: Path, config_path: Path, schema_path: Path):
         config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
     except Exception as exc:
         return [finding("blocker", "build", f"Cannot parse QA configuration: {exc}", str(config_path))]
+
+    config_schema = Path(__file__).resolve().parent / "schemas" / "config.schema.json"
+    validate(config, load_schema(config_schema), "QA config")
 
     if config.get("qa_version") != 1:
         findings.append(finding("critical", "consistency", "Unsupported or missing qa_version", str(config_path)))
