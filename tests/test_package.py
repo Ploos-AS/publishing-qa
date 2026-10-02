@@ -20,6 +20,13 @@ class PackageTests(unittest.TestCase):
             second = build_review_documents(root, ["docs"], "en")
             self.assertNotEqual(d1, source_digest(second))
 
+    def test_source_digest_changes_with_content(self):
+        from publishing_qa.review import ReviewDocument
+        a=(ReviewDocument("docs/a.md","same","en"),)
+        b=(ReviewDocument("docs/a.md","changed","en"),)
+        self.assertEqual(source_digest(a), source_digest(a))
+        self.assertNotEqual(source_digest(a), source_digest(b))
+
 
 if __name__ == "__main__":
     unittest.main()
