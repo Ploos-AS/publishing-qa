@@ -204,11 +204,11 @@ def check_chapter_order(root, config):
 
 
 def heading_levels(text):
-    return [len(m.group(1)) for m in re.finditer(r"^(#{1,6})\\s+.+$", text, re.M)]
+    return [len(m.group(1)) for m in re.finditer(r"^(#{1,6})\s+.+$", text, re.M)]
 
 
 def code_fences(text):
-    return [m.group(1) or "" for m in re.finditer(r"^```([^\\s`]*)[^\\n]*$", text, re.M)]
+    return [m.group(1) or "" for m in re.finditer(r"^```([^\s`]*)[^\n]*$", text, re.M)]
 
 
 def check_structure_parity(root, config):
