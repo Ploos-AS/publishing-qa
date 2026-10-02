@@ -22,11 +22,18 @@ class Broken:
         raise RuntimeError("provider unavailable")
 
 
+class SecretBroken:
+    provider = "secret-broken"
+    def review(self, request):
+        raise RuntimeError("Authorization: Bearer super-secret-token API_KEY=sk-abcdefgh12345678 " + "x"*1000)
+
+
 class OrchestratorTests(unittest.TestCase):
     def registry(self):
         r = AdapterRegistry()
         r.register("good", Good)
         r.register("broken", Broken)
+        r.register("secret-broken", SecretBroken)
         return r
 
     def test_required_failure_marks_run_incomplete(self):
@@ -34,6 +41,15 @@ class OrchestratorTests(unittest.TestCase):
         result = run_reviews(project="x", config=config, documents=(ReviewDocument("a.md","x"),), registry=self.registry(), schema_path=SCHEMA)
         self.assertFalse(result["complete"])
         self.assertEqual(result["required_failures"], ["r1"])
+
+    def test_failure_audit_sanitizes_secrets_and_limits_error_size(self):
+        config = {"ai":{"reviewers":{"required":[{"id":"r1","provider":"secret-broken","roles":["technical"]}]}}}
+        result = run_reviews(project="x", config=config, documents=(ReviewDocument("a.md","x"),), registry=self.registry(), schema_path=SCHEMA)
+        error = result["reviewers"][0]["error"]
+        self.assertNotIn("super-secret-token", error)
+        self.assertNotIn("sk-abcdefgh12345678", error)
+        self.assertIn("[REDACTED]", error)
+        self.assertLessEqual(len(error), 260)
 
     def test_supplemental_failure_does_not_block(self):
         config = {"ai":{"reviewers":{"required":[{"id":"r1","provider":"good","roles":["technical"]}],"supplemental":[{"id":"extra","provider":"broken","roles":["specialist"]}]}}}
