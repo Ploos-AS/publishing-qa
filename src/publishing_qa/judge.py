@@ -10,6 +10,9 @@ def judge_record(consensus: dict[str, Any], findings_by_id: dict[str, dict[str, 
     originals = [findings_by_id[x] for x in consensus["finding_ids"] if x in findings_by_id]
     max_severity = max((x["severity"] for x in originals), key=lambda s: SEVERITY_ORDER[s], default="info")
     statuses = {x.get("verification_status", "unverified") for x in originals}
+    consensus_status = consensus.get("verification_status", "unverified")
+    if consensus_status != "unverified":
+        statuses = {consensus_status}
 
     if "confirmed" in statuses:
         disposition = "confirmed"
