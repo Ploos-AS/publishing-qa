@@ -89,4 +89,10 @@ evidence:
   #   type: executable_test
   #   command: python -m unittest discover -s tests -v
   #   timeout: 300
-  # Producers must later be explicitly bound to the claim/check they verify.
+  # Producers must be explicitly bound to the claim/check they verify.
+  bindings: []
+  # Example:
+  # - match:
+  #     category: code
+  #     file: "docs/**/*.md"
+  #   producers: [unit-tests]
