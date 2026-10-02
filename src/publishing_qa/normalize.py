@@ -30,6 +30,7 @@ def normalize_finding(raw: dict[str, Any], reviewer_id: str, index: int) -> dict
         "file": raw.get("file"),
         "line": raw.get("line"),
         "claim": raw.get("claim"),
+        "claim_id": raw.get("claim_id"),
         "problem": str(raw.get("problem", "")).strip(),
         "suggested_fix": raw.get("suggested_fix"),
         "confidence": float(raw.get("confidence", 0.5)),
