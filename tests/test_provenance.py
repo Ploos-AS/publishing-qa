@@ -25,6 +25,27 @@ class ProvenanceTests(unittest.TestCase):
         self.assertEqual(e["supports"], "dispute")
         self.assertEqual(e["provenance"]["exit_code"], 2)
 
+    def test_failed_command_can_confirm_negative_claim(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            e = collect_command_evidence(
+                evidence_id="E-NEG", kind="executable_test",
+                command="python -c \"raise SystemExit(1)\"", cwd=Path(tmp),
+                supports_on_success="dispute",
+                supports_on_failure="confirm",
+            )
+        self.assertEqual(e["supports"], "confirm")
+        self.assertEqual(e["provenance"]["exit_code"], 1)
+
+    def test_timeout_polarity_is_explicit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            e = collect_command_evidence(
+                evidence_id="E-TIME", kind="executable_test",
+                command="python -c \"import time; time.sleep(1)\"", cwd=Path(tmp),
+                supports_on_timeout="dispute", timeout=0.01,
+            )
+        self.assertEqual(e["supports"], "dispute")
+        self.assertTrue(e["provenance"]["timed_out"])
+
     def test_artifact_is_digested(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
