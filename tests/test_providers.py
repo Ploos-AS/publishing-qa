@@ -31,8 +31,8 @@ class ProviderTests(unittest.TestCase):
         t = FakeTransport()
         a = JSONReviewerAdapter(transport=t, model="x", output_schema={})
         a.review(ReviewRequest("p","r",("technical",),(ReviewDocument("a.md","source"),), context={"release":"rc1"}))
-        self.assertNotIn("findings", t.calls[0]["prompt"].lower().split("<document", 1)[0])
         self.assertNotIn("rc1", t.calls[0]["prompt"])
+        self.assertNotIn("foreign finding", t.calls[0]["prompt"].lower())
 
 
 if __name__ == "__main__":
