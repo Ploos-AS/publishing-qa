@@ -75,3 +75,33 @@ class MistralTransport(BaseHTTPTransport):
         data = self.client.post(self.url, headers={"Authorization":f"Bearer {self.api_key}"}, payload=payload)
         text = data["choices"][0]["message"]["content"]
         return json.loads(text)
+
+
+class AnthropicTransport(BaseHTTPTransport):
+    provider = "anthropic"
+    url = "https://api.anthropic.com/v1/messages"
+
+    def generate_json(self, *, model, system, prompt, schema):
+        payload = {
+            "model": model,
+            "max_tokens": 4096,
+            "system": system,
+            "messages": [{"role":"user","content":prompt}],
+            "output_config":{"format":{"type":"json_schema","schema":schema}},
+        }
+        data = self.client.post(
+            self.url,
+            headers={
+                "x-api-key": self.api_key,
+                "anthropic-version": "2023-06-01",
+            },
+            payload=payload,
+        )
+        text = None
+        for block in data.get("content", []):
+            if block.get("type") == "text":
+                text = block.get("text")
+                break
+        if not text:
+            raise ValueError("Anthropic response contained no text block")
+        return json.loads(text)
