@@ -16,6 +16,7 @@ def run_pipeline(
     qualifications: list[dict[str, Any]],
     human_approved: bool,
     evidence_by_consensus: dict[str, list[dict[str, Any]]] | None = None,
+    human_approval_source_digest: str | None = None,
 ) -> dict[str, Any]:
     findings = list(review_run.get("findings", []))
     groups = summarize_groups(findings)
@@ -34,6 +35,21 @@ def run_pipeline(
         for spec in config.get("ai", {}).get("reviewers", {}).get("required", [])
     ]
 
+    review_digest = review_run.get("source_digest")
+    deterministic_digest = deterministic_report.get("source_digest")
+    evidence_digests = {
+        item.get("source_digest")
+        for items in evidence_by_consensus.values()
+        for item in items
+        if item.get("source_digest")
+    }
+    source_identity_ok = bool(
+        review_digest
+        and deterministic_digest == review_digest
+        and (not evidence_digests or evidence_digests == {review_digest})
+        and (not human_approved or human_approval_source_digest == review_digest)
+    )
+
     deterministic_ok = bool(deterministic_report.get("passed", False))
     build_ok = bool(deterministic_report.get("build_passed", False))
 
@@ -46,12 +62,13 @@ def run_pipeline(
         required_providers=required,
         judged_findings=judged,
         human_approved=human_approved,
+        source_identity_ok=source_identity_ok,
     )
 
     return {
         "format_version": 1,
         "project": project,
-        "source_digest": review_run.get("source_digest"),
+        "source_digest": review_digest,
         "decision": gate["decision"],
         "deterministic": deterministic_report,
         "review_run": review_run,
