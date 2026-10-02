@@ -14,6 +14,7 @@ class PackageDataTests(unittest.TestCase):
           "evidence-map.schema.json",
           "pipeline-report.schema.json",
           "finding.schema.json",
+          "config.schema.json",
         }
         self.assertTrue(root.is_dir())
         self.assertEqual(required,{p.name for p in root.glob("*.json")})
