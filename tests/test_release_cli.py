@@ -46,6 +46,17 @@ class ReleaseCLITests(unittest.TestCase):
             self.assertIn("human approval missing",report["release_gate"]["blocking_reasons"])
         finally: td.cleanup()
 
+    def test_human_approval_digest_mismatch_fails(self):
+        td,root,args=self.fixture()
+        try:
+            i=args.index("--human-approval-source-digest")
+            args[i+1]="b"*64
+            self.assertEqual(release_main(args),1)
+            report=json.loads((root/"qa-report.json").read_text())
+            self.assertEqual(report["decision"],"FAIL")
+            self.assertIn("source identity mismatch", " ".join(report["release_gate"]["blocking_reasons"]))
+        finally: td.cleanup()
+
     def test_malformed_review_run_is_rejected(self):
         td,root,args=self.fixture()
         try:
