@@ -10,6 +10,9 @@ from pathlib import Path
 import yaml
 from jsonschema import Draft202012Validator
 
+from .package import source_digest
+from .review import ReviewDocument
+
 
 def finding(severity, category, problem, file=None, line=None):
     return {
@@ -300,10 +303,31 @@ def main():
     counts = {s: 0 for s in ("blocker","critical","high","medium","low","info")}
     for item in findings:
         counts[item["severity"]] += 1
-    report = {"format_version": 1, "engine": "ploos-publishing-qa", "findings": findings, "summary": counts}
+    documents = tuple(
+        ReviewDocument(
+            path=str(path.relative_to(root)),
+            content=path.read_text(encoding="utf-8"),
+            language="",
+        )
+        for path in markdown_files(root, (yaml.safe_load((root / args.config).read_text(encoding="utf-8")) or {}).get("source", {}).get("paths", []))
+    )
+    blocking = any(counts[s] for s in ("blocker","critical","high"))
+    build_blocking = any(
+        item["category"] == "build" and item["severity"] in ("blocker","critical","high")
+        for item in findings
+    )
+    report = {
+        "format_version": 1,
+        "engine": "ploos-publishing-qa",
+        "passed": not blocking,
+        "build_passed": not build_blocking,
+        "source_digest": source_digest(documents),
+        "findings": findings,
+        "summary": counts,
+    }
     Path(args.output).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(counts, sort_keys=True))
-    sys.exit(1 if any(counts[s] for s in ("blocker","critical","high")) else 0)
+    sys.exit(1 if blocking else 0)
 
 
 if __name__ == "__main__":
