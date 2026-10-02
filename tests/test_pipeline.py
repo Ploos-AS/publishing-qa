@@ -64,6 +64,19 @@ class PipelineTests(unittest.TestCase):
         r=self.pipeline(review_run={"complete":True,"findings":[f],"source_digest":DIGEST}, evidence_by_consensus=evidence)
         self.assertEqual(r["decision"],"FAIL")
 
+    def test_evidence_without_source_digest_blocks(self):
+        evidence={"CON-0001":[{"type":"primary_source","supports":"confirm","ref":"x"}]}
+        f={"finding_id":"F-1","severity":"medium","category":"fact","file":"a.md","claim":"x","problem":"wrong","suggested_fix":"fix","confidence":0.9,"requires_verification":True,"verification_status":"unverified","reviewer":"openai"}
+        r=self.pipeline(review_run={"complete":True,"findings":[f],"source_digest":DIGEST}, evidence_by_consensus=evidence)
+        self.assertEqual(r["decision"],"FAIL")
+        self.assertIn("source identity mismatch", " ".join(r["release_gate"]["blocking_reasons"]))
+
+    def test_matching_evidence_source_digest_preserves_identity(self):
+        evidence={"CON-0001":[{"type":"primary_source","supports":"confirm","ref":"x","source_digest":DIGEST}]}
+        f={"finding_id":"F-1","severity":"medium","category":"fact","file":"a.md","claim":"x","problem":"wrong","suggested_fix":"fix","confidence":0.9,"requires_verification":True,"verification_status":"unverified","reviewer":"openai"}
+        r=self.pipeline(review_run={"complete":True,"findings":[f],"source_digest":DIGEST}, evidence_by_consensus=evidence)
+        self.assertNotIn("source identity mismatch", " ".join(r["release_gate"]["blocking_reasons"]))
+
     def test_human_approval_blocks(self):
         self.assertEqual(self.pipeline(human_approved=False)["decision"],"FAIL")
 
