@@ -1,0 +1,9 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"PloosQA Evidence by Consensus",
+  "type":"object",
+  "patternProperties":{
+    "^CON-[0-9]{4,}$":{"type":"array","items":{"type":"object"}}
+  },
+  "additionalProperties":false
+}
