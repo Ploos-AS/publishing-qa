@@ -173,6 +173,14 @@ def check_publication(root, config):
                 findings.append(finding("high", "consistency", f"ISBN is reused by {seen[digits]} and {edition}", str(metadata_path.relative_to(root))))
             seen[digits] = edition
 
+    return findings
+
+
+def check_publication_artifacts(root, config):
+    findings = []
+    pub = config.get("publication", {})
+    if not pub.get("enabled"):
+        return findings
     for artifact in pub.get("required_artifacts", []):
         if not (root / artifact).exists():
             findings.append(finding("high", "build", f"Required publication artifact is missing: {artifact}"))
@@ -284,6 +292,7 @@ def run(root: Path, config_path: Path, schema_path: Path):
     findings += check_chapter_order(root, config)
     findings += check_structure_parity(root, config)
     findings += run_hooks(root, config)
+    findings += check_publication_artifacts(root, config)
 
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     validator = Draft202012Validator(schema)
