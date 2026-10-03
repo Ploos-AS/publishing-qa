@@ -10,6 +10,7 @@ from pathlib import Path
 import yaml
 from jsonschema import Draft202012Validator
 
+from .binding import validate_bindings, validate_producers
 from .package import build_review_documents, source_digest
 from .review import ReviewDocument
 from .validation import load_schema, validate
@@ -274,6 +275,14 @@ def run(root: Path, config_path: Path, schema_path: Path):
 
     config_schema = Path(__file__).resolve().parent / "schemas" / "config.schema.json"
     validate(config, load_schema(config_schema), "QA config")
+    evidence = config.get("evidence", {})
+    producers = evidence.get("producers", [])
+    producer_errors = validate_producers(producers)
+    producer_ids = {p.get("id") for p in producers if p.get("id")}
+    binding_errors = validate_bindings(evidence.get("bindings", []), producer_ids)
+    semantic_errors = producer_errors + binding_errors
+    if semantic_errors:
+        raise ValueError("QA config evidence: " + "; ".join(semantic_errors))
 
     if config.get("qa_version") != 1:
         findings.append(finding("critical", "consistency", "Unsupported or missing qa_version", str(config_path)))
