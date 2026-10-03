@@ -86,6 +86,29 @@ class DeterministicQATests(unittest.TestCase):
                 main()
             self.assertEqual(exit.exception.code, 2)
 
+    def test_language_parity_matches_translated_slug_by_numeric_chapter_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "course/nb").mkdir(parents=True)
+            (root / "course/en").mkdir(parents=True)
+            (root / "course/nb/02-binaer.md").write_text("# Binær\\n", encoding="utf-8")
+            (root / "course/en/02-binary.md").write_text("# Binary\\n", encoding="utf-8")
+            config(root, "source:\\n  paths: [course/nb, course/en]\\nparity:\\n  enabled: true\\n  language_dirs:\\n    nb: course/nb\\n    en: course/en\\n")
+            findings = run(root, root / "publishing-qa.yml", SCHEMA)
+            self.assertFalse(any(f["category"] == "translation" and f["severity"] == "high" for f in findings))
+
+    def test_language_parity_does_not_guess_ambiguous_numeric_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "course/nb").mkdir(parents=True)
+            (root / "course/en").mkdir(parents=True)
+            (root / "course/nb/02-binaer.md").write_text("# Binær\\n", encoding="utf-8")
+            (root / "course/en/02-binary.md").write_text("# Binary\\n", encoding="utf-8")
+            (root / "course/en/02-bits.md").write_text("# Bits\\n", encoding="utf-8")
+            config(root, "source:\\n  paths: [course/nb, course/en]\\nparity:\\n  enabled: true\\n  language_dirs:\\n    nb: course/nb\\n    en: course/en\\n")
+            findings = run(root, root / "publishing-qa.yml", SCHEMA)
+            self.assertTrue(any(f["category"] == "translation" and f["severity"] == "high" for f in findings))
+
     def test_broken_local_link_is_high(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); config(root)
