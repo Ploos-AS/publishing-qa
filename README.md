@@ -62,3 +62,8 @@ M2.18 adds opt-in qualification of the real OpenAI, Anthropic, Google Gemini and
 A release qualification artifact records the exact provider and model that passed. Changing the model requires a new qualification; a successful mock or offline CI run is not a substitute for live qualification.
 
 See `docs/m2-live-qualification.md` for secrets, model inputs, artifacts and operational procedure.
+
+
+## M2 freeze
+
+M2 is feature-frozen. The engine baseline, invariants and M3 boundary are recorded in `docs/m2-freeze.md`. Future M2 changes are limited to defects, security fixes, provider API compatibility fixes and documentation corrections. New publishing capabilities move to M3.
