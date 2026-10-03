@@ -317,11 +317,16 @@ def _main():
     parser = argparse.ArgumentParser(prog="publishing-qa")
     parser.add_argument("root", nargs="?", default=".")
     parser.add_argument("--config", default="publishing-qa.yml")
-    parser.add_argument("--schema", default="schema/finding.schema.json")
+    parser.add_argument("--schema", default=None)
     parser.add_argument("--output", default="qa-report.json")
     args = parser.parse_args()
     root = Path(args.root).resolve()
-    findings = run(root, (root / args.config).resolve(), (root / args.schema).resolve())
+    schema_path = (
+        (root / args.schema).resolve()
+        if args.schema
+        else Path(__file__).resolve().parent / "schemas" / "finding.schema.json"
+    )
+    findings = run(root, (root / args.config).resolve(), schema_path)
     counts = {s: 0 for s in ("blocker","critical","high","medium","low","info")}
     for item in findings:
         counts[item["severity"]] += 1
