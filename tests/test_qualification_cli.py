@@ -40,7 +40,7 @@ class QualificationCLITests(unittest.TestCase):
             output = Path(tmp) / "qualification.json"
             argv = ["ploos-qa-qualify", "--provider", "openai", "--output", str(output)]
             with patch.dict(os.environ, {"OPENAI_MODEL": "test-model"}, clear=True), \
-                 patch("publishing_qa.qualification_cli.OpenAITransport"), \
+                 patch("publishing_qa.qualification_cli.build_adapter", return_value=object()), \
                  patch("publishing_qa.qualification_cli.qualify_provider", return_value=result), \
                  patch("sys.argv", argv), self.assertRaises(SystemExit) as exit:
                 qualification_cli.main()
