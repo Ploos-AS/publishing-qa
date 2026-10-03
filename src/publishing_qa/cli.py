@@ -120,10 +120,9 @@ def check_language_parity(root, config):
             rel = src.relative_to(base)
             if (other / rel).exists():
                 continue
-            chapter_id = re.match(r"^(\\d+)[-_]", src.name)
+            prefix = src.name.split("-", 1)[0].split("_", 1)[0]
             matched = False
-            if chapter_id:
-                prefix = chapter_id.group(1)
+            if prefix.isdigit():
                 candidates = [
                     p for p in other_files
                     if p.parent.relative_to(other) == rel.parent
