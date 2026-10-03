@@ -103,7 +103,7 @@ class DeterministicQATests(unittest.TestCase):
             (root / "course/nb").mkdir(parents=True)
             (root / "course/en").mkdir(parents=True)
             (root / "course/nb/02-binaer.md").write_text("# Binær\\n", encoding="utf-8")
-            (root / "course/en/02-binary.md").write_text("# Binary\\n", encoding="utf-8")
+            (root / "course/en/02-binary-alt.md").write_text("# Binary\\n", encoding="utf-8")
             (root / "course/en/02-bits.md").write_text("# Bits\\n", encoding="utf-8")
             config(root, "source:\\n  paths: [course/nb, course/en]\\nparity:\\n  enabled: true\\n  language_dirs:\\n    nb: course/nb\\n    en: course/en\\n")
             findings = run(root, root / "publishing-qa.yml", SCHEMA)
