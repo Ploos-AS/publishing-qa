@@ -13,7 +13,7 @@ from jsonschema import Draft202012Validator
 from .binding import validate_bindings, validate_producers
 from .package import build_review_documents, source_digest
 from .review import ReviewDocument
-from .validation import load_schema, validate
+from .validation import ArtifactValidationError, load_schema, validate
 
 
 def finding(severity, category, problem, file=None, line=None):
@@ -313,7 +313,7 @@ def run(root: Path, config_path: Path, schema_path: Path):
     return findings
 
 
-def main():
+def _main():
     parser = argparse.ArgumentParser(prog="publishing-qa")
     parser.add_argument("root", nargs="?", default=".")
     parser.add_argument("--config", default="publishing-qa.yml")
@@ -350,7 +350,16 @@ def main():
     }
     Path(args.output).write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(counts, sort_keys=True))
-    sys.exit(1 if blocking else 0)
+    return 1 if blocking else 0
+
+
+def main():
+    try:
+        code = _main()
+    except (OSError, UnicodeError, yaml.YAMLError, ArtifactValidationError, ValueError, json.JSONDecodeError) as exc:
+        print(f"publishing-qa: {type(exc).__name__}: {exc}", file=sys.stderr)
+        code = 2
+    sys.exit(code)
 
 
 if __name__ == "__main__":
