@@ -1,15 +1,1 @@
-{
-  "$schema":"https://json-schema.org/draft/2020-12/schema",
-  "title":"PloosQA Provider Qualification Result",
-  "type":"object",
-  "required":["provider","model","qualified","structured_output","latency_ms","error"],
-  "properties":{
-    "provider":{"type":"string"},
-    "model":{"type":"string"},
-    "qualified":{"type":"boolean"},
-    "structured_output":{"type":"boolean"},
-    "latency_ms":{"type":"integer","minimum":0},
-    "error":{"type":["string","null"]}
-  },
-  "additionalProperties":false
-}
+{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","required":["provider","model","qualified","structured_output","latency_ms","error"],"properties":{"provider":{"type":"string"},"model":{"type":"string"},"qualified":{"type":"boolean"},"structured_output":{"type":"boolean"},"latency_ms":{"type":"integer","minimum":0},"error":{"type":["string","null"]}},"additionalProperties":false}
