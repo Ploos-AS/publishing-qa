@@ -115,9 +115,22 @@ def check_language_parity(root, config):
         if not other.exists():
             findings.append(finding("high", "translation", f"Language directory is missing: {other.relative_to(root)}"))
             continue
+        other_files = list(other.rglob("*.md"))
         for src in base.rglob("*.md"):
             rel = src.relative_to(base)
-            if not (other / rel).exists():
+            if (other / rel).exists():
+                continue
+            chapter_id = re.match(r"^(\\d+)[-_]", src.name)
+            matched = False
+            if chapter_id:
+                prefix = chapter_id.group(1)
+                candidates = [
+                    p for p in other_files
+                    if p.parent.relative_to(other) == rel.parent
+                    and re.match(rf"^{re.escape(prefix)}[-_]", p.name)
+                ]
+                matched = len(candidates) == 1
+            if not matched:
                 findings.append(finding("high", "translation", f"Missing {lang} counterpart for {rel}", str(src.relative_to(root))))
     return findings
 
