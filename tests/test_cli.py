@@ -46,6 +46,27 @@ class DeterministicQATests(unittest.TestCase):
             expected=source_digest(build_review_documents(root, ["docs"], "nb"))
             self.assertEqual(report["source_digest"], expected)
 
+    def test_duplicate_evidence_producer_id_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            config(root, "evidence:\n  producers:\n    - {id: test, type: executable_test, command: 'true'}\n    - {id: test, type: executable_test, command: 'true'}\n")
+            with self.assertRaisesRegex(ValueError, "duplicates producer id"):
+                run(root, root/"publishing-qa.yml", SCHEMA)
+
+    def test_evidence_binding_unknown_producer_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            config(root, "evidence:\n  producers: []\n  bindings:\n    - match: {category: fact}\n      producers: [missing]\n")
+            with self.assertRaisesRegex(ValueError, "unknown producer"):
+                run(root, root/"publishing-qa.yml", SCHEMA)
+
+    def test_invalid_evidence_polarity_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            config(root, "evidence:\n  producers:\n    - {id: test, type: executable_test, command: 'true', supports_on_success: maybe}\n")
+            with self.assertRaisesRegex(ValueError, "supports_on_success"):
+                run(root, root/"publishing-qa.yml", SCHEMA)
+
     def test_broken_local_link_is_high(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); config(root)
