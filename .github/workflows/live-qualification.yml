@@ -28,9 +28,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: live-provider-qualification
+  cancel-in-progress: false
+
 jobs:
   qualify:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment: live-provider-qualification
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
