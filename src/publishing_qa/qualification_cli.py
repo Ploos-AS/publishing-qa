@@ -20,6 +20,11 @@ PROVIDERS = {
 }
 
 
+def build_adapter(provider: str, model: str, finding_schema):
+    adapter_cls, transport_cls, _ = PROVIDERS[provider]
+    return adapter_cls(transport=transport_cls(), model=model, output_schema=finding_schema)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="ploos-qa-qualify")
     parser.add_argument("--provider", action="append", choices=sorted(PROVIDERS), dest="providers")
@@ -32,7 +37,7 @@ def main() -> None:
     results = []
 
     for provider in selected:
-        adapter_cls, transport_cls, model_env = PROVIDERS[provider]
+        _, _, model_env = PROVIDERS[provider]
         model = os.environ.get(model_env, "").strip()
         if not model:
             result = {
@@ -42,7 +47,7 @@ def main() -> None:
             }
         else:
             try:
-                adapter = adapter_cls(transport=transport_cls(), model=model, output_schema=finding_schema)
+                adapter = build_adapter(provider, model, finding_schema)
                 result = qualify_provider(provider=provider, adapter=adapter, model=model)
             except Exception as exc:
                 result = {
