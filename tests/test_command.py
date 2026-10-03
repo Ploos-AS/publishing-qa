@@ -1,4 +1,8 @@
 import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from publishing_qa import cli
 from unittest.mock import patch
 
 from publishing_qa.command import main
