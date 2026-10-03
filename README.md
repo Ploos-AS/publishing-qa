@@ -49,3 +49,7 @@ source
 ## Audit privacy
 
 Review audit is privacy-safe by default: source content and provider notes are not retained in the audit artifact, failures are sanitized, and source identity is represented by a digest. Full-content audit is an explicit sensitive debug opt-in. See `docs/m2-audit-privacy.md`.
+
+## M2 integration contract
+
+M2.17 freezes source identity, artifact ordering, schema synchronization, evidence/config validation, and CLI exit semantics across deterministic QA and the release gate. The real end-to-end regression requires identical source artifacts to pass and stale source artifacts to fail closed. See `docs/m2-integration-contract.md`.
