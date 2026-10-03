@@ -29,3 +29,23 @@ The `providers` input accepts `all` or a comma-separated subset. This allows one
 Every run attempts to upload `provider-qualification.json`, including failed qualifications. The command exits successfully only when every selected provider qualifies. Provider errors stored in the artifact are sanitized by the qualification layer.
 
 Recommended repository protection is to require approval for the `live-provider-qualification` Environment. This makes live inference a deliberate human action in addition to the manual workflow trigger.
+
+
+## Operational acceptance
+
+M2.18 code acceptance and provider acceptance are deliberately separate.
+
+Code acceptance requires ordinary CI to pass the qualification CLI tests, workflow trigger/security tests, provider transport mocks, schema validation and package tests. These tests incur no provider cost.
+
+Provider acceptance requires a manual live run for each provider/model pair intended for a release. A provider/model pair is accepted only when its artifact has `qualified: true` and `structured_output: true`. Qualification of one model does not qualify another model from the same provider.
+
+Before a full four-reviewer production pilot:
+
+1. configure the protected Environment and its required reviewers;
+2. add the four API-key secrets;
+3. choose explicit model names for the intended production review;
+4. run qualification for each provider/model pair;
+5. retain the resulting JSON artifact as release input/evidence;
+6. do not proceed as fully qualified if any required provider fails.
+
+No secret value should be placed in repository configuration, workflow inputs, logs, documentation or qualification artifacts.
