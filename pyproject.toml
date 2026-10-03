@@ -17,6 +17,7 @@ dependencies = [
 publishing-qa = "publishing_qa.cli:main"
 ploos-qa = "publishing_qa.command:entrypoint"
 ploos-qa-release = "publishing_qa.release_cli:main"
+ploos-qa-qualify = "publishing_qa.qualification_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
