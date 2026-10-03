@@ -67,6 +67,25 @@ class DeterministicQATests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "supports_on_success"):
                 run(root, root/"publishing-qa.yml", SCHEMA)
 
+    def test_cli_invalid_config_exits_two(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            (root/"publishing-qa.yml").write_text("qa_version: 1\nproject: {}\n", encoding="utf-8")
+            argv=["publishing-qa",str(root),"--schema",str(SCHEMA),"--output",str(root/"det.json")]
+            with patch("sys.argv", argv), patch("sys.stderr"), self.assertRaises(SystemExit) as exit:
+                main()
+            self.assertEqual(exit.exception.code, 2)
+            self.assertFalse((root/"det.json").exists())
+
+    def test_cli_semantic_evidence_error_exits_two(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            config(root, "evidence:\n  producers:\n    - {id: x, type: executable_test, command: 'true', supports_on_success: invalid}\n")
+            argv=["publishing-qa",str(root),"--schema",str(SCHEMA),"--output",str(root/"det.json")]
+            with patch("sys.argv", argv), patch("sys.stderr"), self.assertRaises(SystemExit) as exit:
+                main()
+            self.assertEqual(exit.exception.code, 2)
+
     def test_broken_local_link_is_high(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); config(root)
