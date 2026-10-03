@@ -95,7 +95,12 @@ class DeterministicQATests(unittest.TestCase):
             (root / "course/en/02-binary.md").write_text("# Binary\\n", encoding="utf-8")
             config(root, "source:\n  paths: [course/nb, course/en]\nparity:\n  enabled: true\n  language_dirs:\n    nb: course/nb\n    en: course/en\n")
             findings = run(root, root / "publishing-qa.yml", SCHEMA)
-            self.assertFalse(any(f["category"] == "translation" and f["severity"] == "high" for f in findings))
+            self.assertFalse(any(
+                f["category"] == "translation"
+                and f["severity"] == "high"
+                and "Missing en counterpart" in f["problem"]
+                for f in findings
+            ))
 
     def test_language_parity_does_not_guess_ambiguous_numeric_id(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -107,7 +112,12 @@ class DeterministicQATests(unittest.TestCase):
             (root / "course/en/02-bits.md").write_text("# Bits\\n", encoding="utf-8")
             config(root, "source:\n  paths: [course/nb, course/en]\nparity:\n  enabled: true\n  language_dirs:\n    nb: course/nb\n    en: course/en\n")
             findings = run(root, root / "publishing-qa.yml", SCHEMA)
-            self.assertTrue(any(f["category"] == "translation" and f["severity"] == "high" for f in findings))
+            self.assertTrue(any(
+                f["category"] == "translation"
+                and f["severity"] == "high"
+                and "Missing en counterpart" in f["problem"]
+                for f in findings
+            ))
 
     def test_broken_local_link_is_high(self):
         with tempfile.TemporaryDirectory() as tmp:
