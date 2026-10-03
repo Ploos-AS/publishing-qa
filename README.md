@@ -53,3 +53,12 @@ Review audit is privacy-safe by default: source content and provider notes are n
 ## M2 integration contract
 
 M2.17 freezes source identity, artifact ordering, schema synchronization, evidence/config validation, and CLI exit semantics across deterministic QA and the release gate. The real end-to-end regression requires identical source artifacts to pass and stale source artifacts to fail closed. See `docs/m2-integration-contract.md`.
+
+
+## Live provider qualification
+
+M2.18 adds opt-in qualification of the real OpenAI, Anthropic, Google Gemini and Mistral adapters. Live inference is never part of push or pull-request CI. It must be started manually through the protected `live-provider-qualification` GitHub Environment, with explicit provider/model selection.
+
+A release qualification artifact records the exact provider and model that passed. Changing the model requires a new qualification; a successful mock or offline CI run is not a substitute for live qualification.
+
+See `docs/m2-live-qualification.md` for secrets, model inputs, artifacts and operational procedure.
